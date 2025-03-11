@@ -1,0 +1,12 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Start program.cs",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/program.cs",
+            "preLaunchTask": "build"
+        }
+    ]
+}
