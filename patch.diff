@@ -1,0 +1,906 @@
+diff --git a/Camera.cs b/Camera.cs
+index a99ac1c..54389df 100644
+--- a/Camera.cs
++++ b/Camera.cs
+@@ -1,13 +1,5 @@
+ ﻿using OpenTK.Graphics.OpenGL;
+ using OpenTK.Mathematics;
+-using System;
+-using System.Collections.Generic;
+-using System.Drawing.Drawing2D;
+-using System.Linq;
+-using System.Numerics;
+-using System.Reflection.Metadata.Ecma335;
+-using System.Text;
+-using System.Threading.Tasks;
+ 
+ namespace ZPG
+ {
+@@ -29,7 +21,7 @@ namespace ZPG
+ 
+         public void SetProjection()
+         {
+-            float ratio = (float)((viewport.Width * viewport.Control.Width) / (viewport.Height * viewport.Control.Height));
++            float ratio = (float)((viewport.Width * viewport.Window.Width) / (viewport.Height * viewport.Window.Height));
+             //Matrix4 projection = Matrix4.CreateOrthographic(scale*2, scale * 2 / ratio, -10, 10);
+             Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView(fov, ratio, 0.1f, 100);
+             GL.MatrixMode(MatrixMode.Projection);
+diff --git a/Cube.cs b/Cube.cs
+index 34618e8..c764afa 100644
+--- a/Cube.cs
++++ b/Cube.cs
+@@ -1,6 +1,3 @@
+-using System;
+-
+-
+ namespace ZPG
+ {
+     public class Cube : Model
+@@ -33,4 +30,4 @@ namespace ZPG
+             triangles.Add(new Triangle(3, 7, 7));
+         }
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/Cv04.csproj b/Cv04.csproj
+index 50038f9..b0f1e3e 100644
+--- a/Cv04.csproj
++++ b/Cv04.csproj
+@@ -1,17 +1,15 @@
+ ﻿<Project Sdk="Microsoft.NET.Sdk">
+ 
+   <PropertyGroup>
+-    <OutputType>Exe</OutputType>
+-    <TargetFramework>net9.0-windows</TargetFramework>
++    <OutputType>WinExe</OutputType>
++    <TargetFramework>net8.0</TargetFramework>
+     <Nullable>enable</Nullable>
+-    <UseWindowsForms>true</UseWindowsForms>
+     <ImplicitUsings>enable</ImplicitUsings>
+     <RootNamespace>ZPG</RootNamespace>
+   </PropertyGroup>
+ 
+   <ItemGroup>
+     <PackageReference Include="OpenTK" Version="4.9.3" />
+-    <PackageReference Include="OpenTK.GLControl" Version="4.0.2" />
+   </ItemGroup>
+ 
+-</Project>
+\ No newline at end of file
++</Project>
+diff --git a/Cv04.csproj.user b/Cv04.csproj.user
+deleted file mode 100644
+index 457b0c4..0000000
+--- a/Cv04.csproj.user
++++ /dev/null
+@@ -1,9 +0,0 @@
+-﻿<?xml version="1.0" encoding="utf-8"?>
+-<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+-  <PropertyGroup />
+-  <ItemGroup>
+-    <Compile Update="Form1.cs">
+-      <SubType>Form</SubType>
+-    </Compile>
+-  </ItemGroup>
+-</Project>
+\ No newline at end of file
+diff --git a/Form1.Designer.cs b/Form1.Designer.cs
+deleted file mode 100644
+index 2d5da31..0000000
+--- a/Form1.Designer.cs
++++ /dev/null
+@@ -1,189 +0,0 @@
+-﻿using OpenTK.GLControl;
+-using OpenTK.Windowing.Common;
+-
+-namespace ZPG
+-{
+-    partial class Form1
+-    {
+-        /// <summary>
+-        ///  Required designer variable.
+-        /// </summary>
+-        private System.ComponentModel.IContainer components = null;
+-
+-        /// <summary>
+-        ///  Clean up any resources being used.
+-        /// </summary>
+-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+-        protected override void Dispose(bool disposing)
+-        {
+-            if (disposing && (components != null))
+-            {
+-                components.Dispose();
+-            }
+-            base.Dispose(disposing);
+-        }
+-
+-        #region Windows Form Designer generated code
+-
+-        /// <summary>
+-        ///  Required method for Designer support - do not modify
+-        ///  the contents of this method with the code editor.
+-        /// </summary>
+-        private void InitializeComponent()
+-        {
+-            glControl = new GLControl();
+-            tabEditorMode = new TabControl();
+-            pageVertexEdit = new TabPage();
+-            listVertices = new ListBox();
+-            propertyVertex = new PropertyGrid();
+-            tabTriEdit = new TabPage();
+-            listTriangles = new ListBox();
+-            propertyTriangle = new PropertyGrid();
+-            button1 = new Button();
+-            tabEditorMode.SuspendLayout();
+-            pageVertexEdit.SuspendLayout();
+-            tabTriEdit.SuspendLayout();
+-            SuspendLayout();
+-            // 
+-            // glControl
+-            // 
+-            glControl.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+-            glControl.API = ContextAPI.OpenGL;
+-            glControl.APIVersion = new Version(3, 3, 0, 0);
+-            glControl.Flags = ContextFlags.Default;
+-            glControl.IsEventDriven = true;
+-            glControl.Location = new Point(8, 7);
+-            glControl.Margin = new Padding(2);
+-            glControl.Name = "glControl";
+-            glControl.Profile = ContextProfile.Compatability;
+-            glControl.SharedContext = null;
+-            glControl.Size = new Size(548, 474);
+-            glControl.TabIndex = 1;
+-            glControl.Load += glControl_Load;
+-            glControl.Paint += glControl1_Paint;
+-            glControl.MouseClick += glControl_MouseClick;
+-            glControl.MouseMove += glControl_MouseMove;
+-            // 
+-            // tabEditorMode
+-            // 
+-            tabEditorMode.Controls.Add(pageVertexEdit);
+-            tabEditorMode.Controls.Add(tabTriEdit);
+-            tabEditorMode.Dock = DockStyle.Right;
+-            tabEditorMode.Location = new Point(561, 0);
+-            tabEditorMode.Margin = new Padding(2);
+-            tabEditorMode.Name = "tabEditorMode";
+-            tabEditorMode.SelectedIndex = 0;
+-            tabEditorMode.Size = new Size(236, 488);
+-            tabEditorMode.TabIndex = 0;
+-            // 
+-            // pageVertexEdit
+-            // 
+-            pageVertexEdit.Controls.Add(listVertices);
+-            pageVertexEdit.Controls.Add(propertyVertex);
+-            pageVertexEdit.Location = new Point(4, 24);
+-            pageVertexEdit.Margin = new Padding(2);
+-            pageVertexEdit.Name = "pageVertexEdit";
+-            pageVertexEdit.Padding = new Padding(2);
+-            pageVertexEdit.Size = new Size(228, 460);
+-            pageVertexEdit.TabIndex = 0;
+-            pageVertexEdit.Text = "Body";
+-            pageVertexEdit.UseVisualStyleBackColor = true;
+-            // 
+-            // listVertices
+-            // 
+-            listVertices.Dock = DockStyle.Fill;
+-            listVertices.FormattingEnabled = true;
+-            listVertices.Location = new Point(2, 200);
+-            listVertices.Margin = new Padding(2);
+-            listVertices.Name = "listVertices";
+-            listVertices.Size = new Size(224, 258);
+-            listVertices.TabIndex = 1;
+-            // 
+-            // propertyVertex
+-            // 
+-            propertyVertex.BackColor = SystemColors.Control;
+-            propertyVertex.Dock = DockStyle.Top;
+-            propertyVertex.Location = new Point(2, 2);
+-            propertyVertex.Margin = new Padding(2);
+-            propertyVertex.Name = "propertyVertex";
+-            propertyVertex.Size = new Size(224, 198);
+-            propertyVertex.TabIndex = 0;
+-            // 
+-            // tabTriEdit
+-            // 
+-            tabTriEdit.Controls.Add(listTriangles);
+-            tabTriEdit.Controls.Add(propertyTriangle);
+-            tabTriEdit.Controls.Add(button1);
+-            tabTriEdit.Location = new Point(4, 24);
+-            tabTriEdit.Margin = new Padding(2);
+-            tabTriEdit.Name = "tabTriEdit";
+-            tabTriEdit.Padding = new Padding(2);
+-            tabTriEdit.Size = new Size(228, 460);
+-            tabTriEdit.TabIndex = 1;
+-            tabTriEdit.Text = "Trojúhelníky";
+-            tabTriEdit.UseVisualStyleBackColor = true;
+-            // 
+-            // listTriangles
+-            // 
+-            listTriangles.Dock = DockStyle.Fill;
+-            listTriangles.FormattingEnabled = true;
+-            listTriangles.Location = new Point(2, 192);
+-            listTriangles.Margin = new Padding(2);
+-            listTriangles.Name = "listTriangles";
+-            listTriangles.Size = new Size(224, 246);
+-            listTriangles.TabIndex = 1;
+-            // 
+-            // propertyTriangle
+-            // 
+-            propertyTriangle.BackColor = SystemColors.Control;
+-            propertyTriangle.Dock = DockStyle.Top;
+-            propertyTriangle.Location = new Point(2, 2);
+-            propertyTriangle.Margin = new Padding(2);
+-            propertyTriangle.Name = "propertyTriangle";
+-            propertyTriangle.Size = new Size(224, 190);
+-            propertyTriangle.TabIndex = 0;
+-            // 
+-            // button1
+-            // 
+-            button1.Dock = DockStyle.Bottom;
+-            button1.Location = new Point(2, 438);
+-            button1.Margin = new Padding(2);
+-            button1.Name = "button1";
+-            button1.Size = new Size(224, 20);
+-            button1.TabIndex = 2;
+-            button1.Text = "Přidat";
+-            button1.UseVisualStyleBackColor = true;
+-            button1.Click += buttonTriangleAdd;
+-            // 
+-            // Form1
+-            // 
+-            AutoScaleDimensions = new SizeF(7F, 15F);
+-            AutoScaleMode = AutoScaleMode.Font;
+-            ClientSize = new Size(797, 488);
+-            Controls.Add(tabEditorMode);
+-            Controls.Add(glControl);
+-            KeyPreview = true;
+-            Margin = new Padding(2);
+-            Name = "Form1";
+-            Text = "Form1";
+-            FormClosed += Form1_FormClosed;
+-            KeyDown += Form1_KeyDown;
+-            KeyUp += Form1_KeyUp;
+-            tabEditorMode.ResumeLayout(false);
+-            pageVertexEdit.ResumeLayout(false);
+-            tabTriEdit.ResumeLayout(false);
+-            ResumeLayout(false);
+-        }
+-
+-        #endregion
+-        private TabControl tabEditorMode;
+-        private TabPage pageVertexEdit;
+-        private ListBox listVertices;
+-        public GLControl glControl;
+-        private TabPage tabTriEdit;
+-        private ListBox listTriangles;
+-        private PropertyGrid propertyTriangle;
+-        private Button button1;
+-        private PropertyGrid propertyVertex;
+-    }
+-}
+diff --git a/Form1.cs b/Form1.cs
+deleted file mode 100644
+index 6762b72..0000000
+--- a/Form1.cs
++++ /dev/null
+@@ -1,188 +0,0 @@
+-using OpenTK.Graphics.OpenGL;
+-using OpenTK.Mathematics;
+-
+-namespace ZPG
+-{
+-    public partial class Form1 : Form
+-    {
+-        public Model model;
+-        public Cube cube;
+-        public Viewport viewport = new Viewport();
+-        public Camera camera;
+-        public Matrix4 projection = new Matrix4();
+-        public Matrix4 view = new Matrix4();
+-
+-        public Form1()
+-        {
+-            InitializeComponent();
+-        }
+-
+-        /// <summary>
+-        /// vykreslovani sceny
+-        /// </summary>
+-        /// <param name="sender"></param>
+-        /// <param name="e"></param>
+-        private void glControl1_Paint(object sender, PaintEventArgs e)
+-        {
+-            glControl.MakeCurrent();
+-            viewport.Set();
+-            viewport.Clear();
+-            camera.SetProjection();
+-            camera.SetView();
+-
+-            /*GL.MatrixMode(MatrixMode.Projection);
+-            GL.LoadMatrix(ref projection);
+-
+-            GL.MatrixMode(MatrixMode.Modelview);
+-            GL.LoadMatrix(ref view);*/
+-
+-            GL.PointSize(10);
+-            //model.Draw();
+-            cube.Draw();
+-
+-            glControl.SwapBuffers();
+-        }
+-
+-        private void glControl_MouseClick(object sender, MouseEventArgs e)
+-        {
+-            /*Vector3 screenpos = viewport.WindowViewport(e.X, e.Y);
+-            Vector4 ndcpos = new Vector4((float)screenpos.X, (float)screenpos.Y, 0, 1);
+-
+-            Matrix4 invProjection = projection.Inverted();
+-            Matrix4 invView = view.Inverted();
+-
+-            Vector4 worldpos = Vector4.TransformColumn(invProjection, ndcpos);
+-            worldpos = Vector4.TransformRow(worldpos, invView);
+-
+-            worldpos /= worldpos.W;
+-
+-            model.vertices.Add(new Vertex(new Vector3(worldpos.X, worldpos.Y, worldpos.Z), new ColorRGB(1, 1, 1)));
+-            model.Changed = true;*/
+-        }
+-
+-        private void glControl_Load(object sender, EventArgs e)
+-        {
+-            // viewport zat�m p�es celou kontrolku
+-            viewport = new Viewport()
+-            {
+-                Top = 0,
+-                Left = 0,
+-                Width = 1,
+-                Height = 1,
+-                Control = glControl
+-            };
+-
+-            camera = new Camera(viewport);
+-
+-            // zajist� automatick� p�ekreslov�n�
+-            Application.Idle += (s, e) => glControl.Invalidate();
+-
+-            model = new Model();
+-            model.vertices.Add(new Vertex(new Vector3(-0.9, -0.9, 0), new ColorRGB(1, 0, 0)));
+-            model.vertices.Add(new Vertex(new Vector3(0.9, 0.9, 0), new ColorRGB(1, 0, 0)));
+-            model.vertices.Add(new Vertex(new Vector3(-0.9, 0.8, 0), new ColorRGB(1, 1, 0)));
+-            model.vertices.Add(new Vertex(new Vector3(0.9, -0.8, 0), new ColorRGB(1, 1, 0)));
+-            model.triangles.Add(new Triangle(0, 1, 2));
+-            model.triangles.Add(new Triangle(1, 3, 0));
+-
+-            cube = new Cube();
+-
+-
+-
+-            // napojen� dat listbox <-> propertygrid
+-            listVertices.DataSource = model.vertices;
+-            propertyVertex.PropertyValueChanged += ((s, e) =>
+-            {
+-                model.vertices.ResetBindings();
+-                model.Changed = true;
+-            });
+-            listVertices.SelectedIndexChanged += ((s, e) =>
+-            {
+-                propertyVertex.SelectedObject = listVertices.SelectedItem;
+-                propertyVertex.ExpandAllGridItems();
+-            }
+-            );
+-
+-            listTriangles.DataSource = model.triangles;
+-            propertyTriangle.PropertyValueChanged += ((s, e) =>
+-            {
+-                model.triangles.ResetBindings();
+-                model.Changed = true;
+-            });
+-            listTriangles.SelectedIndexChanged += ((s, e) =>
+-            {
+-                propertyTriangle.SelectedObject = listTriangles.SelectedItem;
+-                propertyTriangle.ExpandAllGridItems();
+-            }
+-            );
+-
+-            glControl.MouseWheel += GlControl_MouseWheel;
+-        }
+-
+-        private void GlControl_MouseWheel(object? sender, MouseEventArgs e)
+-        {
+-            camera.Zoom(e.Delta < 0 ? 0.9f : 1.1f);
+-        }
+-
+-        private void Form1_FormClosed(object sender, FormClosedEventArgs e)
+-        {
+-            model?.Dispose();
+-        }
+-
+-        private void buttonTriangleAdd(object sender, EventArgs e)
+-        {
+-            model.triangles.Add(new Triangle(0, 0, 0));
+-        }
+-
+-        bool keyMoveLeft, keyMoveRight;
+-        bool keyMoveUp, keyMoveDown;
+-        bool keyRotateLeft, keyRotateRight;
+-        bool keyRotateUp, keyRotateDown;
+-
+-        bool editmode = true;
+-
+-        private void Form1_KeyDown(object sender, KeyEventArgs e)
+-        {
+-            switch (e.KeyCode)
+-            {
+-                case Keys.F1:
+-                    {
+-                        if (editmode)
+-                        {
+-                            var mid = new Point(glControl.Width / 2, glControl.Height / 2);
+-                            Cursor.Position = glControl.PointToScreen(mid);
+-                        }
+-                        editmode = !editmode;
+-                        break;
+-                    }
+-                case Keys.A: camera.Move(-0.1f, 0); break;
+-                case Keys.D: camera.Move(0.1f, 0); break;
+-                case Keys.S: camera.Move(0, -0.1f); break;
+-                case Keys.W: camera.Move(0, 0.1f); break;
+-                case Keys.NumPad4: camera.RotateY(-0.1f); break;
+-                case Keys.NumPad8: camera.RotateX(-0.1f); break;
+-            }
+-        }
+-
+-        private void Form1_KeyUp(object sender, KeyEventArgs e)
+-        {
+-
+-        }
+-
+-        private void glControl_MouseMove(object sender, MouseEventArgs e)
+-        {
+-            if (!editmode)
+-            {
+-                var mid = new Point(glControl.Width / 2, glControl.Height / 2);
+-
+-                camera.RotateX((e.Y - mid.Y) / 250f);
+-                camera.RotateY((e.X - mid.X) / 250f);
+-
+-                if (e.X != mid.X || e.Y != mid.Y)
+-                {
+-                    Cursor.Position = glControl.PointToScreen(mid);
+-                }
+-            }
+-        }
+-    }
+-}
+diff --git a/Form1.resx b/Form1.resx
+deleted file mode 100644
+index 4f24d55..0000000
+--- a/Form1.resx
++++ /dev/null
+@@ -1,120 +0,0 @@
+-﻿<?xml version="1.0" encoding="utf-8"?>
+-<root>
+-  <!--
+-    Microsoft ResX Schema
+-
+-    Version 2.0
+-
+-    The primary goals of this format is to allow a simple XML format
+-    that is mostly human readable. The generation and parsing of the
+-    various data types are done through the TypeConverter classes
+-    associated with the data types.
+-
+-    Example:
+-
+-    ... ado.net/XML headers & schema ...
+-    <resheader name="resmimetype">text/microsoft-resx</resheader>
+-    <resheader name="version">2.0</resheader>
+-    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+-    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+-    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+-    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+-    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+-        <value>[base64 mime encoded serialized .NET Framework object]</value>
+-    </data>
+-    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+-        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+-        <comment>This is a comment</comment>
+-    </data>
+-
+-    There are any number of "resheader" rows that contain simple
+-    name/value pairs.
+-
+-    Each data row contains a name, and value. The row also contains a
+-    type or mimetype. Type corresponds to a .NET class that support
+-    text/value conversion through the TypeConverter architecture.
+-    Classes that don't support this are serialized and stored with the
+-    mimetype set.
+-
+-    The mimetype is used for serialized objects, and tells the
+-    ResXResourceReader how to depersist the object. This is currently not
+-    extensible. For a given mimetype the value must be set accordingly:
+-
+-    Note - application/x-microsoft.net.object.binary.base64 is the format
+-    that the ResXResourceWriter will generate, however the reader can
+-    read any of the formats listed below.
+-
+-    mimetype: application/x-microsoft.net.object.binary.base64
+-    value   : The object must be serialized with
+-            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+-            : and then encoded with base64 encoding.
+-
+-    mimetype: application/x-microsoft.net.object.soap.base64
+-    value   : The object must be serialized with
+-            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+-            : and then encoded with base64 encoding.
+-
+-    mimetype: application/x-microsoft.net.object.bytearray.base64
+-    value   : The object must be serialized into a byte array
+-            : using a System.ComponentModel.TypeConverter
+-            : and then encoded with base64 encoding.
+-    -->
+-  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+-    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+-    <xsd:element name="root" msdata:IsDataSet="true">
+-      <xsd:complexType>
+-        <xsd:choice maxOccurs="unbounded">
+-          <xsd:element name="metadata">
+-            <xsd:complexType>
+-              <xsd:sequence>
+-                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+-              </xsd:sequence>
+-              <xsd:attribute name="name" use="required" type="xsd:string" />
+-              <xsd:attribute name="type" type="xsd:string" />
+-              <xsd:attribute name="mimetype" type="xsd:string" />
+-              <xsd:attribute ref="xml:space" />
+-            </xsd:complexType>
+-          </xsd:element>
+-          <xsd:element name="assembly">
+-            <xsd:complexType>
+-              <xsd:attribute name="alias" type="xsd:string" />
+-              <xsd:attribute name="name" type="xsd:string" />
+-            </xsd:complexType>
+-          </xsd:element>
+-          <xsd:element name="data">
+-            <xsd:complexType>
+-              <xsd:sequence>
+-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+-                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+-              </xsd:sequence>
+-              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+-              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+-              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+-              <xsd:attribute ref="xml:space" />
+-            </xsd:complexType>
+-          </xsd:element>
+-          <xsd:element name="resheader">
+-            <xsd:complexType>
+-              <xsd:sequence>
+-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+-              </xsd:sequence>
+-              <xsd:attribute name="name" type="xsd:string" use="required" />
+-            </xsd:complexType>
+-          </xsd:element>
+-        </xsd:choice>
+-      </xsd:complexType>
+-    </xsd:element>
+-  </xsd:schema>
+-  <resheader name="resmimetype">
+-    <value>text/microsoft-resx</value>
+-  </resheader>
+-  <resheader name="version">
+-    <value>2.0</value>
+-  </resheader>
+-  <resheader name="reader">
+-    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+-  </resheader>
+-  <resheader name="writer">
+-    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+-  </resheader>
+-</root>
+\ No newline at end of file
+diff --git a/Model.cs b/Model.cs
+index 0be7376..0119e78 100644
+--- a/Model.cs
++++ b/Model.cs
+@@ -1,13 +1,5 @@
+ ﻿using OpenTK.Graphics.OpenGL;
+-using System;
+-using System.Collections.Generic;
+-using System.Collections.ObjectModel;
+ using System.ComponentModel;
+-using System.Linq;
+-using System.Reflection;
+-using System.Security.Permissions;
+-using System.Text;
+-using System.Threading.Tasks;
+ 
+ namespace ZPG
+ {
+diff --git a/Program.cs b/Program.cs
+index ae63eef..b5dc019 100644
+--- a/Program.cs
++++ b/Program.cs
+@@ -8,10 +8,7 @@ namespace ZPG
+         [STAThread]
+         static void Main()
+         {
+-            // To customize application configuration such as set high DPI settings or default font,
+-            // see https://aka.ms/applicationconfiguration.
+-            ApplicationConfiguration.Initialize();
+-            Application.Run(new Form1());
++			new Window().Run();
+         }
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/Triangle.cs b/Triangle.cs
+index 4dbf594..ed671f0 100644
+--- a/Triangle.cs
++++ b/Triangle.cs
+@@ -1,10 +1,4 @@
+-﻿using System;
+-using System.Collections.Generic;
+-using System.Linq;
+-using System.Text;
+-using System.Threading.Tasks;
+-
+-namespace ZPG
++﻿namespace ZPG
+ {
+ 
+     /// <summary>
+diff --git a/TriangleGL.cs b/TriangleGL.cs
+index a9acdfa..c595066 100644
+--- a/TriangleGL.cs
++++ b/TriangleGL.cs
+@@ -1,10 +1,4 @@
+-﻿using OpenTK.Mathematics;
+-using System;
+-using System.Collections.Generic;
+-using System.Linq;
+-using System.Runtime.InteropServices;
+-using System.Text;
+-using System.Threading.Tasks;
++﻿using System.Runtime.InteropServices;
+ 
+ namespace ZPG
+ {
+diff --git a/VertexGL.cs b/VertexGL.cs
+index 4a5fecd..686d056 100644
+--- a/VertexGL.cs
++++ b/VertexGL.cs
+@@ -1,10 +1,4 @@
+-﻿using OpenTK.Mathematics;
+-using System;
+-using System.Collections.Generic;
+-using System.Linq;
+-using System.Runtime.InteropServices;
+-using System.Text;
+-using System.Threading.Tasks;
++﻿using System.Runtime.InteropServices;
+ 
+ namespace ZPG
+ {
+diff --git a/Viewport.cs b/Viewport.cs
+index 17fd642..24311ba 100644
+--- a/Viewport.cs
++++ b/Viewport.cs
+@@ -1,9 +1,4 @@
+-﻿using OpenTK.Graphics.ES30;
+-using System;
+-using System.Collections.Generic;
+-using System.Linq;
+-using System.Text;
+-using System.Threading.Tasks;
++﻿using OpenTK.Graphics.OpenGL;
+ 
+ namespace ZPG
+ {
+@@ -36,7 +31,7 @@ namespace ZPG
+         /// <summary>
+         /// propojená kontrolka (potřeba kvůli rozměrům)
+         /// </summary>
+-        public Control Control { get; set; }
++        public Window Window { get; set; }
+ 
+ 
+         public Viewport() { }
+@@ -46,10 +41,10 @@ namespace ZPG
+         /// </summary>
+         public void Set()
+         {
+-            GL.Viewport((int)(Left * Control.Width),
+-                (int)((1-(Top+Height)) * Control.Height),
+-                (int)(Width * Control.Width),
+-                (int)(Height * Control.Height)
++            GL.Viewport((int)(Left * Window.Width),
++                (int)((1-(Top+Height)) * Window.Height),
++                (int)(Width * Window.Width),
++                (int)(Height * Window.Height)
+             );
+         }
+ 
+@@ -60,10 +55,10 @@ namespace ZPG
+         {
+             // Scissort test nastaví platnou část bufferu - na mazání se nevztahuje GL.viewport
+             GL.Enable(EnableCap.ScissorTest);
+-            GL.Scissor((int)(Left * Control.Width),
+-                (int)((1-Top-Height) * Control.Height),
+-                (int)(Width * Control.Width),
+-                (int)(Height * Control.Height)
++            GL.Scissor((int)(Left * Window.Width),
++                (int)((1-Top-Height) * Window.Height),
++                (int)(Width * Window.Width),
++                (int)(Height * Window.Height)
+             );
+             GL.ClearColor(0,0,0,0);
+             GL.Clear(ClearBufferMask.ColorBufferBit);
+@@ -79,8 +74,8 @@ namespace ZPG
+         public Vector3 WindowViewport(int x, int y)
+         {
+             return new Vector3(
+-                ((double)x / Control.Width - Left) / Width * 2 - 1,
+-                -(((double)y / Control.Height - Top) / Height * 2 - 1),
++                ((double)x / Window.Width - Left) / Width * 2 - 1,
++                -(((double)y / Window.Height - Top) / Height * 2 - 1),
+                 0
+ 
+             );
+diff --git a/Window.cs b/Window.cs
+new file mode 100644
+index 0000000..002a1a7
+--- /dev/null
++++ b/Window.cs
+@@ -0,0 +1,148 @@
++using OpenTK.Graphics.OpenGL;
++using OpenTK.Mathematics;
++using OpenTK.Windowing.Common;
++using OpenTK.Windowing.Desktop;
++using OpenTK.Windowing.GraphicsLibraryFramework;
++
++namespace ZPG
++{
++    public class Window : GameWindow
++    {
++        public Model model;
++        public Cube cube;
++        public Viewport viewport = new Viewport();
++        public Camera camera;
++        public Matrix4 projection = new Matrix4();
++        public Matrix4 view = new Matrix4();
++
++		private int _width = 0;
++		public int Width => _width;
++
++		private int _height = 0;
++		public int Height => _height;
++
++        bool keyMoveLeft, keyMoveRight;
++        bool keyMoveUp, keyMoveDown;
++        bool keyRotateLeft, keyRotateRight;
++        bool keyRotateUp, keyRotateDown;
++
++        bool editmode = true;
++
++        public Window() : base(GameWindowSettings.Default, NativeWindowSettings.Default)
++        {
++        }
++
++        protected override void OnKeyDown(KeyboardKeyEventArgs e)
++        {
++            base.OnKeyDown(e);
++
++            switch (e.Key)
++            {
++                case Keys.F1:
++                    {
++                        CursorState = editmode ? CursorState.Grabbed : CursorState.Normal;
++                        editmode = !editmode;
++                        break;
++                    }
++                case Keys.A: camera.Move(-0.1f, 0); break;
++                case Keys.D: camera.Move(0.1f, 0); break;
++                case Keys.S: camera.Move(0, -0.1f); break;
++                case Keys.W: camera.Move(0, 0.1f); break;
++                case Keys.D4: camera.RotateY(-0.1f); break;
++                case Keys.D8: camera.RotateX(-0.1f); break;
++            }
++        }
++
++        protected override void OnKeyUp(KeyboardKeyEventArgs e)
++        {
++            base.OnKeyUp(e);
++        }
++
++        protected override void OnLoad()
++        {
++            base.OnLoad();
++
++			GL.LoadBindings(new GLFWBindingsContext());
++
++            viewport = new Viewport()
++            {
++                Top = 0,
++                Left = 0,
++                Width = 1,
++                Height = 1,
++                Window = this
++            };
++
++            camera = new Camera(viewport);
++
++            model = new Model();
++            model.vertices.Add(new Vertex(new Vector3(-0.9, -0.9, 0), new ColorRGB(1, 0, 0)));
++            model.vertices.Add(new Vertex(new Vector3(0.9, 0.9, 0), new ColorRGB(1, 0, 0)));
++            model.vertices.Add(new Vertex(new Vector3(-0.9, 0.8, 0), new ColorRGB(1, 1, 0)));
++            model.vertices.Add(new Vertex(new Vector3(0.9, -0.8, 0), new ColorRGB(1, 1, 0)));
++            model.triangles.Add(new Triangle(0, 1, 2));
++            model.triangles.Add(new Triangle(1, 3, 0));
++
++            cube = new Cube();
++        }
++
++        protected override void OnMouseDown(MouseButtonEventArgs e)
++        {
++            base.OnMouseDown(e);
++        }
++
++        protected override void OnMouseMove(MouseMoveEventArgs e)
++        {
++            base.OnMouseMove(e);
++
++            if (editmode) return;
++
++			camera.RotateX(e.DeltaY / 250f);
++			camera.RotateY(e.DeltaX / 250f);
++        }
++
++        protected override void OnMouseUp(MouseButtonEventArgs e)
++        {
++            base.OnMouseUp(e);
++        }
++
++        protected override void OnMouseWheel(MouseWheelEventArgs e)
++        {
++            base.OnMouseWheel(e);
++
++			camera.Zoom(e.OffsetY < 0 ? 0.9f : 1.1f);
++        }
++
++        protected override void OnRenderFrame(FrameEventArgs args)
++        {
++            base.OnRenderFrame(args);
++
++            viewport.Set();
++            viewport.Clear();
++            camera.SetProjection();
++            camera.SetView();
++
++            GL.PointSize(10);
++            cube.Draw();
++
++            SwapBuffers();
++        }
++
++        protected override void OnResize(ResizeEventArgs e)
++        {
++            base.OnResize(e);
++			_width = e.Width;
++			_height = e.Height;
++        }
++
++        protected override void OnUnload()
++        {
++            base.OnUnload();
++        }
++
++        protected override void OnUpdateFrame(FrameEventArgs args)
++        {
++            base.OnUpdateFrame(args);
++        }
++    }
++}

@@ -1,13 +1,14 @@
-﻿using System;
-
-namespace MrEllen.ZPG
+namespace ZPG
 {
-    class Program
+    internal static class Program
     {
-        static void Main(string[] args)
+        /// <summary>
+        ///  The main entry point for the application.
+        /// </summary>
+        [STAThread]
+        static void Main()
         {
-            Game game = new Game(800, 600, "ZPG");
-            game.Run();
+			new Window().Run();
         }
     }
 }
