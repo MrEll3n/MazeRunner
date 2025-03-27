@@ -1,49 +1,56 @@
 ﻿using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection.Metadata.Ecma335;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace ZPG
 {
     public class Camera
     {
-        private float scale = 1;         
-        float x = 0;
-        float y = 0;
-        float z = 0;
-        float rx = 0;
-        float ry = 0;
-        float fov = 0.9f;
+        private float zoom = 1;
+        public float z = 0;
+        public float x = 0;
+        public float y = 0;
+        public float rx = 0;
+        public float ry = 0;
 
-        public Viewport viewport;
-        public Camera(Viewport viewport)
+        public Viewport Viewport;
+        public Camera(Viewport Viewport)
         {
-            this.viewport = viewport;
+            this.Viewport = Viewport;
         }
 
-        public void SetProjection()
+        public virtual Matrix4 Projection
         {
-            float ratio = (float)((viewport.Width * viewport.Window.Width) / (viewport.Height * viewport.Window.Height));
-            //Matrix4 projection = Matrix4.CreateOrthographic(scale*2, scale * 2 / ratio, -10, 10);
-            Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView(fov, ratio, 0.1f, 100);
-            GL.MatrixMode(MatrixMode.Projection);
-            GL.LoadMatrix(ref projection);
+            get
+            {
+                float ratio = (float)((Viewport.Width * Viewport.Window.Width) / (Viewport.Height * Viewport.Window.Height));
+                return Matrix4.CreatePerspectiveFieldOfView(zoom, ratio, 1f, 10);
+            }
         }
 
         public void Zoom(float coef)
         {
-            fov *= coef;
-            fov = (float)Math.Max(Math.Min(fov, Math.PI * 0.9), 0.1);
+            //zoom *= coef;
+            zoom += coef / 10.0f;
+            zoom = Math.Max(0.2f, Math.Min(2, zoom));
+            Console.WriteLine(zoom);
         }
 
         public void Move(float x, float y)
         {
-            this.x -= (float)(x * Math.Cos(ry) + y * Math.Sin(ry));
-            this.y -= (float)(-y * Math.Cos(ry) + x * Math.Sin(ry)); ;
+            this.x += (float)(x * Math.Cos(ry) + y * Math.Sin(ry));
+            this.z += (float)(x * Math.Sin(ry) - y * Math.Cos(ry));
         }
 
         public void RotateX(float a)
         {
             rx += a;
-            rx = (float)Math.Max(Math.Min(rx, Math.PI / 2), -Math.PI / 2);
+            rx = (float)Math.Max(-Math.PI / 2, Math.Min(Math.PI / 2, rx));
         }
 
         public void RotateY(float a)
@@ -51,17 +58,19 @@ namespace ZPG
             ry += a;
         }
 
-        public void SetView()
-        {
-            Matrix4 view;
-            view = Matrix4.Identity;
-            view *= Matrix4.CreateTranslation(-x, -y, -z);
-            view *= Matrix4.CreateRotationY(ry);
-            view *= Matrix4.CreateRotationX(rx);
-            GL.MatrixMode(MatrixMode.Modelview);
-            
-            GL.LoadMatrix(ref view);
-        }
 
+        public virtual Matrix4 View
+        {
+            get
+            {
+                Matrix4 view;
+                view = Matrix4.Identity;
+                view *= Matrix4.CreateTranslation(-x, -y, -z);
+                view *= Matrix4.CreateRotationY(ry);
+                view *= Matrix4.CreateRotationX(rx);
+                return view;
+            }
+
+        }
     }
 }

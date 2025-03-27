@@ -9,7 +9,7 @@ namespace ZPG
     public class Window : GameWindow
     {
         public Model model;
-        public Cube cube;
+        public Cube cube1, cube2, cube3;
         public Viewport viewport = new Viewport();
         public Camera camera;
         public Matrix4 projection = new Matrix4();
@@ -26,10 +26,11 @@ namespace ZPG
         bool keyRotateLeft, keyRotateRight;
         bool keyRotateUp, keyRotateDown;
 
-        bool editmode = true;
+        private bool _mouseGrabbed = true;
 
         public Window() : base(GameWindowSettings.Default, NativeWindowSettings.Default)
         {
+            CursorState = CursorState.Grabbed;
         }
 
         protected override void OnKeyDown(KeyboardKeyEventArgs e)
@@ -38,18 +39,13 @@ namespace ZPG
 
             switch (e.Key)
             {
-                case Keys.F1:
-                    {
-                        CursorState = editmode ? CursorState.Grabbed : CursorState.Normal;
-                        editmode = !editmode;
-                        break;
-                    }
                 case Keys.A: camera.Move(-0.1f, 0); break;
                 case Keys.D: camera.Move(0.1f, 0); break;
                 case Keys.S: camera.Move(0, -0.1f); break;
                 case Keys.W: camera.Move(0, 0.1f); break;
                 case Keys.D4: camera.RotateY(-0.1f); break;
                 case Keys.D8: camera.RotateX(-0.1f); break;
+                case Keys.Escape: CursorState = _mouseGrabbed ? CursorState.Normal : CursorState.Grabbed; _mouseGrabbed = !_mouseGrabbed; break;
             }
         }
 
@@ -74,16 +70,29 @@ namespace ZPG
             };
 
             camera = new Camera(viewport);
+            
+            Shader shader = new Shader("shaders/basic.vert", "shaders/basic.frag");
+            
+            cube1 = new Cube();
+            cube1.Shader = shader;
+            cube2 = new Cube();
+            cube2.Shader = shader;
+            cube2.position.X = -0.1;
+            cube2.position.Z = -2;
+            cube2.position.Y = -2;
+            cube3 = new Cube();
+            cube3.Shader = shader;
+            cube3.position.Z = +2;
+            cube3.position.Y = +2;
 
             model = new Model();
-            model.vertices.Add(new Vertex(new Vector3(-0.9, -0.9, 0), new ColorRGB(1, 0, 0)));
-            model.vertices.Add(new Vertex(new Vector3(0.9, 0.9, 0), new ColorRGB(1, 0, 0)));
-            model.vertices.Add(new Vertex(new Vector3(-0.9, 0.8, 0), new ColorRGB(1, 1, 0)));
-            model.vertices.Add(new Vertex(new Vector3(0.9, -0.8, 0), new ColorRGB(1, 1, 0)));
-            model.triangles.Add(new Triangle(0, 1, 2));
-            model.triangles.Add(new Triangle(1, 3, 0));
+            model.Vertices.Add(new Vertex(new Vector3(-0.9, -0.9, 0), new ColorRGB(1, 0, 0)));
+            model.Vertices.Add(new Vertex(new Vector3(0.9, 0.9, 0), new ColorRGB(1, 0, 0)));
+            model.Vertices.Add(new Vertex(new Vector3(-0.9, 0.8, 0), new ColorRGB(1, 1, 0)));
+            model.Vertices.Add(new Vertex(new Vector3(0.9, -0.8, 0), new ColorRGB(1, 1, 0)));
+            model.Triangles.Add(new Triangle(0, 1, 2));
+            model.Triangles.Add(new Triangle(1, 3, 0));
 
-            cube = new Cube();
         }
 
         protected override void OnMouseDown(MouseButtonEventArgs e)
@@ -95,7 +104,7 @@ namespace ZPG
         {
             base.OnMouseMove(e);
 
-            if (editmode) return;
+            if (!_mouseGrabbed) return;
 
 			camera.RotateX(e.DeltaY / 250f);
 			camera.RotateY(e.DeltaX / 250f);
@@ -119,11 +128,13 @@ namespace ZPG
 
             viewport.Set();
             viewport.Clear();
-            camera.SetProjection();
-            camera.SetView();
+            //camera.SetProjection();
+            //camera.SetView();
 
             GL.PointSize(10);
-            cube.Draw();
+            cube1.Draw(camera);
+            cube2.Draw(camera);
+            cube3.Draw(camera);
 
             SwapBuffers();
         }

@@ -33,6 +33,8 @@ namespace ZPG
         /// </summary>
         public Window Window { get; set; }
 
+        private float _macMultiplier = 2.0f;
+
 
         public Viewport() { }
 
@@ -41,10 +43,10 @@ namespace ZPG
         /// </summary>
         public void Set()
         {
-            GL.Viewport((int)(Left * Window.Width),
-                (int)((1-(Top+Height)) * Window.Height),
-                (int)(Width * Window.Width),
-                (int)(Height * Window.Height)
+            GL.Viewport(0,
+                0,
+                (int)(Width * Window.Width * _macMultiplier),
+                (int)(Height * Window.Height * _macMultiplier)
             );
         }
 
@@ -54,15 +56,8 @@ namespace ZPG
         public void Clear()
         {
             // Scissort test nastaví platnou část bufferu - na mazání se nevztahuje GL.viewport
-            GL.Enable(EnableCap.ScissorTest);
-            GL.Scissor((int)(Left * Window.Width),
-                (int)((1-Top-Height) * Window.Height),
-                (int)(Width * Window.Width),
-                (int)(Height * Window.Height)
-            );
             GL.ClearColor(0,0,0,0);
             GL.Clear(ClearBufferMask.ColorBufferBit);
-            GL.Disable(EnableCap.ScissorTest);
         }
 
         /// <summary>
