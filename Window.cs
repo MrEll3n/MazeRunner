@@ -10,27 +10,28 @@ namespace ZPG
     {
         public Model model;
         public Cube cube1, cube2, cube3;
-        public Viewport viewport = new Viewport();
+        public Viewport viewport; 
         public Camera camera;
         public Matrix4 projection = new Matrix4();
         public Matrix4 view = new Matrix4();
 
-		private int _width = 0;
-		public int Width => _width;
+		public int Width {get; private set;}
 
-		private int _height = 0;
-		public int Height => _height;
+		public int Height {get; private set;}
 
         bool keyMoveLeft, keyMoveRight;
         bool keyMoveUp, keyMoveDown;
         bool keyRotateLeft, keyRotateRight;
         bool keyRotateUp, keyRotateDown;
 
+        private string[] _args {set; get; }
+
         private bool _mouseGrabbed = true;
 
-        public Window() : base(GameWindowSettings.Default, NativeWindowSettings.Default)
+        public Window(string[] args) : base(GameWindowSettings.Default, NativeWindowSettings.Default)
         {
             CursorState = CursorState.Grabbed;
+            _args = args;
         }
 
         protected override void OnKeyDown(KeyboardKeyEventArgs e)
@@ -47,6 +48,26 @@ namespace ZPG
                 case Keys.D8: camera.RotateX(-0.1f); break;
                 case Keys.Escape: CursorState = _mouseGrabbed ? CursorState.Normal : CursorState.Grabbed; _mouseGrabbed = !_mouseGrabbed; break;
             }
+
+            if (e.Alt)
+            {
+                switch (e.Key)
+                {
+                    case Keys.Q: // Alt+Q
+                        Close();
+                        break;
+                    case Keys.Enter: // Alt+Enter
+                        if (WindowState == WindowState.Fullscreen)
+                        {
+                            WindowState = WindowState.Normal;
+                        }
+                        else
+                        {
+                            WindowState = WindowState.Fullscreen;
+                        }
+                        break;
+                }
+            }
         }
 
         protected override void OnKeyUp(KeyboardKeyEventArgs e)
@@ -58,14 +79,26 @@ namespace ZPG
         {
             base.OnLoad();
 
+            float vpScale = 1.0f;
 			GL.LoadBindings(new GLFWBindingsContext());
+
+            for (int i = 0; i < _args.Length; ++i)
+            {
+                if (_args[i] == "--fullscreen")
+                {
+                    WindowState = WindowState.Fullscreen;
+                    CursorState = CursorState.Grabbed;
+                }
+
+                if (_args[i] == "--mac") {vpScale = 2.0f;}
+            }
 
             viewport = new Viewport()
             {
                 Top = 0,
                 Left = 0,
-                Width = 1,
-                Height = 1,
+                Width = 1*vpScale,
+                Height = 1*vpScale,
                 Window = this
             };
 
@@ -142,8 +175,8 @@ namespace ZPG
         protected override void OnResize(ResizeEventArgs e)
         {
             base.OnResize(e);
-			_width = e.Width;
-			_height = e.Height;
+			Width = e.Width;
+			Height = e.Height;
         }
 
         protected override void OnUnload()

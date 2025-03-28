@@ -33,7 +33,7 @@ namespace ZPG
         /// </summary>
         public Window Window { get; set; }
 
-        private float _macMultiplier = 2.0f;
+        private float _macMultiplier = 1.0f;
 
 
         public Viewport() { }
@@ -43,10 +43,11 @@ namespace ZPG
         /// </summary>
         public void Set()
         {
-            GL.Viewport(0,
+            GL.Viewport(
                 0,
-                (int)(Width * Window.Width * _macMultiplier),
-                (int)(Height * Window.Height * _macMultiplier)
+                0,
+                (int)(Width * Window.Width),
+                (int)(Height * Window.Height)
             );
         }
 
