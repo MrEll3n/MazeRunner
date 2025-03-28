@@ -148,7 +148,7 @@ namespace ZPG
 
             //GL.Enable(EnableCap.CullFace);
             GL.LineWidth(5);
-            GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
+            GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Fill);
 
             // Vykreslení pole vrcholů
             GL.DrawArrays(PrimitiveType.Points, 0, Vertices.Count);
