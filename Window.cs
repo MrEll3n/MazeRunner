@@ -114,7 +114,7 @@ namespace ZPG
         {
             base.OnMouseWheel(e);
 
-            player.Camera.ChangeFOV(e.OffsetY < 0 ? -0.1f : +0.1f);
+            player.Camera.ChangeFOV(e.OffsetY < 0 ? -1.0f : +1.0f);
         }
 
         protected override void OnRenderFrame(FrameEventArgs args)
