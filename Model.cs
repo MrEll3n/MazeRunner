@@ -21,7 +21,7 @@ namespace ZPG
 
         public Shader Shader;
 
-        public Vector3 position = new Vector3(0,0,0);
+        public Vector3 Position = new Vector3(0,0,0);
 
         /// <summary>
         /// BindingList umožňuje snadno spojit kolekci s ListBoxem
@@ -106,7 +106,7 @@ namespace ZPG
         /// </summary>
         public void Draw(Camera camera)
         {
-            Matrix4 translate = Matrix4.CreateTranslation((float)position.X, (float)position.Y, (float)position.Z);
+            Matrix4 translate = Matrix4.CreateTranslation((float)Position.X, (float)Position.Y, (float)Position.Z);
 
             Shader.Use();
             Shader.SetUniform("projection", camera.Projection);

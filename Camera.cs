@@ -1,56 +1,54 @@
-﻿using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Metadata.Ecma335;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ZPG
 {
     public class Camera
     {
-        private float zoom = 1;
-        public float z = 0;
-        public float x = 0;
-        public float y = 0;
+        private float fovDegrees = 90f; // ✅ FOV stored in degrees now
+        private float ncp = 1f;
+        private float fcp = 100f;
+
+        public Vector3 Position { get; set; } = Vector3.Zero;
         public float rx = 0;
         public float ry = 0;
 
         public Viewport Viewport;
-        public Camera(Viewport Viewport)
-        {
-            this.Viewport = Viewport;
-        }
 
-        public virtual Matrix4 Projection
+        public Camera(Vector3 startPosition, float aspectRatio)
         {
-            get
+            Position = startPosition;
+            this.Viewport = new Viewport()
             {
-                float ratio = (float)((Viewport.Width * Viewport.Window.Width) / (Viewport.Height * Viewport.Window.Height));
-                return Matrix4.CreatePerspectiveFieldOfView(zoom, ratio, 1f, 10);
-            }
+                Width = 1,
+                Height = aspectRatio,
+                Left = 0,
+                Top = 0
+            };
         }
 
-        public void Zoom(float coef)
+        public Vector3 Front =>
+            new Vector3(
+                (float)(Math.Cos(rx) * Math.Sin(ry)),
+                (float)(Math.Sin(rx)),
+                (float)(Math.Cos(rx) * Math.Cos(ry))
+            ).Normalized();
+
+        public Vector3 Right => Vector3.Cross(Front, Vector3.UnitY).Normalized();
+
+        public void SetFOV(float degrees)
         {
-            //zoom *= coef;
-            zoom += coef / 10.0f;
-            zoom = Math.Max(0.2f, Math.Min(2, zoom));
-            Console.WriteLine(zoom);
+            fovDegrees = Math.Clamp(degrees, 30f, 120f); // ⬅ reasonable range
         }
 
-        public void Move(float x, float y)
+        public void ChangeFOV(float deltaDegrees)
         {
-            this.x += (float)(x * Math.Cos(ry) + y * Math.Sin(ry));
-            this.z += (float)(x * Math.Sin(ry) - y * Math.Cos(ry));
+            SetFOV(fovDegrees + deltaDegrees);
         }
 
         public void RotateX(float a)
         {
             rx += a;
-            rx = (float)Math.Max(-Math.PI / 2, Math.Min(Math.PI / 2, rx));
+            rx = Math.Clamp(rx, -MathF.PI / 2, MathF.PI / 2);
         }
 
         public void RotateY(float a)
@@ -58,19 +56,17 @@ namespace ZPG
             ry += a;
         }
 
-
-        public virtual Matrix4 View
+        public Matrix4 Projection
         {
             get
             {
-                Matrix4 view;
-                view = Matrix4.Identity;
-                view *= Matrix4.CreateTranslation(-x, -y, -z);
-                view *= Matrix4.CreateRotationY(ry);
-                view *= Matrix4.CreateRotationX(rx);
-                return view;
+                float ratio = Viewport.Width / Viewport.Height;
+                float fovRadians = MathHelper.DegreesToRadians(fovDegrees);
+                return Matrix4.CreatePerspectiveFieldOfView(fovRadians, ratio, ncp, fcp);
             }
-
         }
+
+        public Matrix4 View =>
+            Matrix4.LookAt(Position, Position + Front, Vector3.UnitY);
     }
 }

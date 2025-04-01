@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using OpenTK.Mathematics;
 
 namespace ZPG
 {
@@ -7,13 +8,8 @@ namespace ZPG
     /// </summary>
     public class Vertex
     {
-        /// <summary>
-        /// TypeConverter umožňuje zobrazit vnitřní strukturu v PropertyGridu
-        /// </summary>
-        [TypeConverter(typeof(ExpandableObjectConverter))]
         public Vector3 Position { get; set; }
 
-        [TypeConverter(typeof(ExpandableObjectConverter))]
         public ColorRGB Color { get; set; }
 
         public Vertex(Vector3 position, ColorRGB color)

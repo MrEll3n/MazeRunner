@@ -1,42 +1,47 @@
 ﻿using OpenTK.Graphics.OpenGL;
+using OpenTK.Mathematics;
 
 namespace ZPG
 {
     /// <summary>
-    /// Viewport umožňuje namapovat normalizované souřadnice zařízení (-1, 1) do části kontorolky pomocí 
-    /// normalizovaných souřadnice okna (0, 1) a zpět. 
+    /// Viewport umožňuje namapovat normalizované souřadnice zařízení (-1, 1) do části kontrolky pomocí 
+    /// normalizovaných souřadnic okna (0, 1) a zpět. 
     /// </summary>
     public class Viewport
     {
         /// <summary>
         /// normalizovaná souřadnice okna (0 = horní okraj)
         /// </summary>
-        public double Top { get; set; }
+        public float Top { get; set; }
 
         /// <summary>
-        /// normalizovaná souřadnice okna (0 = levý okraj
+        /// normalizovaná souřadnice okna (0 = levý okraj)
         /// </summary>
-        public double Left { get; set; }
+        public float Left { get; set; }
 
         /// <summary>
         /// šířka (1 = celá šířka kontrolky)
         /// </summary>
-        public double Width { get; set; }
+        public float Width { get; set; }
 
         /// <summary>
         /// výška (1 = celá výška kontrolky)
         /// </summary>
-        public double Height { get; set; }
+        public float Height { get; set; }
 
         /// <summary>
         /// propojená kontrolka (potřeba kvůli rozměrům)
         /// </summary>
-        public Window Window { get; set; }
+        public Window Window { get; set; } = null!;
 
         private float _macMultiplier = 1.0f;
 
-
         public Viewport() { }
+
+        /// <summary>
+        /// Poměr stran viewportu
+        /// </summary>
+        public float AspectRatio => (float)Window.Size.X / Window.Size.Y;
 
         /// <summary>
         /// nastaví tento viewport jako platný
@@ -56,13 +61,12 @@ namespace ZPG
         /// </summary>
         public void Clear()
         {
-            // Scissort test nastaví platnou část bufferu - na mazání se nevztahuje GL.viewport
-            GL.ClearColor(0,0,0,0);
+            GL.ClearColor(0, 0, 0, 0);
             GL.Clear(ClearBufferMask.ColorBufferBit);
         }
 
         /// <summary>
-        /// převede soužadnice okna na normalizované souřadnice zařízení podle umístění a velikosti viewportu
+        /// převede souřadnice okna na normalizované souřadnice zařízení podle umístění a velikosti viewportu
         /// </summary>
         /// <param name="x">x souřadnice v pixelech</param>
         /// <param name="y">y souřadnice v pixelech</param>
@@ -70,10 +74,9 @@ namespace ZPG
         public Vector3 WindowViewport(int x, int y)
         {
             return new Vector3(
-                ((double)x / Window.Width - Left) / Width * 2 - 1,
-                -(((double)y / Window.Height - Top) / Height * 2 - 1),
+                ((float)x / Window.Width - Left) / Width * 2 - 1,
+                -(((float)y / Window.Height - Top) / Height * 2 - 1),
                 0
-
             );
         }
     }

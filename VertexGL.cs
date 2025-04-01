@@ -1,4 +1,5 @@
 ﻿using System.Runtime.InteropServices;
+using OpenTK.Mathematics;
 
 namespace ZPG
 {
@@ -8,8 +9,8 @@ namespace ZPG
     [StructLayout(LayoutKind.Sequential, Pack = 64)]
     public struct VertexGL
     {
-        public OpenTK.Mathematics.Vector3 position;
-        public OpenTK.Mathematics.Vector3 color;
+        public Vector3 position;
+        public Vector3 color;
 
         public VertexGL(Vector3 position, ColorRGB color)
         {
