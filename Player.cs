@@ -28,11 +28,17 @@ namespace ZPG
             controller.AddForce(force);
         }
 
-        public void Jump(float force)
+        public void MoveToward(Vector3 targetVelocity)
+        {
+            controller.MoveToward(targetVelocity);
+        }
+
+        public void Jump(float velocityY)
         {
             if (IsOnGround)
             {
-                AddForce(new Vector3(0, force, 0));
+                Velocity = new Vector3(Velocity.X, 0, Velocity.Z);
+                Velocity += new Vector3(0, velocityY, 0); // ⚠ přímo nastavíme výchozí rychlost vzhůru
                 IsOnGround = false;
             }
         }

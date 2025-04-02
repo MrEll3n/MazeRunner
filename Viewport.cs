@@ -62,7 +62,7 @@ namespace ZPG
         public void Clear()
         {
             GL.ClearColor(0, 0, 0, 0);
-            GL.Clear(ClearBufferMask.ColorBufferBit);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         }
 
         /// <summary>

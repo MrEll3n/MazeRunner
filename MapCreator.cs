@@ -7,7 +7,7 @@ namespace ZPG
 {
     public class MapReader
     {
-        private readonly List<Cube> walls = new();
+        private readonly List<Wall> walls = new();
         private readonly Shader shader;
         private readonly int wallLength = 2;
         public Vector3 playerStartPosition {get; private set;}
@@ -39,7 +39,7 @@ namespace ZPG
 
                         if (IsWall(c))
                         {
-                            Cube wall = new()
+                            Wall wall = new()
                             {
                                 Shader = shader,
                                 Position = position
@@ -85,7 +85,7 @@ namespace ZPG
             }
         }
 
-        public List<Cube> GetWalls()
+        public List<Wall> GetWalls()
         {
             return walls;
         }
