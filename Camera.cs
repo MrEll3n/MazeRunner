@@ -39,9 +39,10 @@ namespace ZPG
         }
 
         public void RotateX(float a)
-        {
+        {   
+            float oneRad = MathF.PI/180; // 1 degree in radians
             rx += a;
-            rx = Math.Clamp(rx, -MathF.PI / 2, MathF.PI / 2);
+            rx = Math.Clamp(rx, (-(MathF.PI / 2) +  oneRad), ((MathF.PI / 2) - oneRad));
         }
 
         public void RotateY(float a)
@@ -53,7 +54,7 @@ namespace ZPG
         {
             get
             {
-                float ratio = Window.Width / Window.Height;
+                float ratio = Window.Width / (float)Window.Height;
                 float fovRadians = MathHelper.DegreesToRadians(fovDegrees);
                 return Matrix4.CreatePerspectiveFieldOfView(fovRadians, ratio, ncp, fcp);
             }

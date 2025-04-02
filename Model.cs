@@ -38,7 +38,7 @@ namespace ZPG
             List<float> vboData = new List<float>();
             for (int i = 0; i < Vertices.Count; i++)
                 vboData.AddRange(Vertices[i].ToArray());
-            GL.BufferData(BufferTarget.ArrayBuffer, vboData.Count * VertexGL.SizeOf(), vboData.ToArray(), BufferUsageHint.StaticDraw);
+            GL.BufferData(BufferTarget.ArrayBuffer, vboData.Count * sizeof(float), vboData.ToArray(), BufferUsageHint.StaticDraw);
 
             // EBO setup
             ebo = GL.GenBuffer();
@@ -50,7 +50,7 @@ namespace ZPG
                 eboData.Add(Triangles[i].I2);
                 eboData.Add(Triangles[i].I3);
             }
-            GL.BufferData(BufferTarget.ElementArrayBuffer, eboData.Count * TriangleGL.SizeOf(), eboData.ToArray(), BufferUsageHint.StaticDraw);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, eboData.Count * sizeof(int), eboData.ToArray(), BufferUsageHint.StaticDraw);
 
             // Vertex attribute pointers
             int stride = VertexGL.SizeOf();
@@ -84,6 +84,8 @@ namespace ZPG
                 Shader.SetUniform("uTexture", 0);
             }
 
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
+            
             GL.BindVertexArray(vao);
 
             /*
@@ -115,7 +117,7 @@ namespace ZPG
             }
             */
 
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
+            
 
             // GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Fill);
             GL.DrawElements(PrimitiveType.Triangles, Triangles.Count * 3, DrawElementsType.UnsignedInt, IntPtr.Zero);

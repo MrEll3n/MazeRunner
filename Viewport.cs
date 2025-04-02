@@ -39,7 +39,7 @@ namespace ZPG
         /// <summary>
         /// Poměr stran viewportu
         /// </summary>
-        public float AspectRatio => (float)Window.Size.X / Window.Size.Y;
+        public float AspectRatio => (float)Window.Size.X / (float)Window.Size.Y;
 
         /// <summary>
         /// nastaví tento viewport jako platný
