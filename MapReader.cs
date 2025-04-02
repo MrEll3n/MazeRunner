@@ -10,7 +10,7 @@ namespace ZPG
         private readonly List<Wall> walls = new();
         private readonly Shader shader;
         private readonly int wallLength = 2;
-        public Vector3 playerStartPosition {get; private set;}
+        public Vector3 playerStartPosition { get; private set; }
 
         public MapReader(Shader shader)
         {
@@ -27,15 +27,35 @@ namespace ZPG
 
             try
             {
-                int height = 0;
-
-                foreach (var line in File.ReadLines(filePath))
+                var lines = File.ReadAllLines(filePath);
+                if (lines.Length < 2)
                 {
-                    int width = 0;
+                    Console.WriteLine("Soubor neobsahuje dostatek řádků.");
+                    return;
+                }
 
-                    foreach (char c in line)
+                // Získání rozměrů z prvního řádku (např. "24x17")
+                string[] dimensions = lines[0].Split('x');
+                int width = int.Parse(dimensions[0]);
+                int height = int.Parse(dimensions[1]);
+
+                // Kontrola, že máme dostatek dat
+                if (lines.Length - 1 < height)
+                {
+                    Console.WriteLine("Mapový soubor neobsahuje očekávaný počet řádků.");
+                    return;
+                }
+
+                for (int z = 0; z < height; z++)
+                {
+                    string line = lines[z + 1];
+                    for (int x = 0; x < width; x++)
                     {
-                        Vector3 position = new Vector3(width * wallLength, 0, height * wallLength);
+                        if (x >= line.Length)
+                            continue; // ochrana proti kratším řádkům
+
+                        char c = line[x];
+                        Vector3 position = new Vector3(x * wallLength, 0, z * wallLength);
 
                         if (IsWall(c))
                         {
@@ -48,34 +68,29 @@ namespace ZPG
                         }
                         else if (IsStartPosition(c))
                         {
-                            // TODO: Vytvoření hráče nebo startovního objektu na této pozici
                             playerStartPosition = position;
                         }
                         else if (IsLight(c))
                         {
-                            // TODO: Přidání světelného objektu
+                            // TODO: Přidání světla
                         }
                         else if (IsDoor(c))
                         {
-                            // TODO: Přidání dveří
+                            // TODO: Dveře
                         }
                         else if (IsSolidObject(c))
                         {
-                            // TODO: Pevné objekty
+                            // TODO: Pevný objekt
                         }
                         else if (IsEnemy(c))
                         {
-                            // TODO: Cizí postavy / protivníci
+                            // TODO: Nepřítel
                         }
                         else if (IsItem(c))
                         {
-                            // TODO: Předměty ke sběru
+                            // TODO: Item
                         }
-
-                        width++;
                     }
-
-                    height++;
                 }
             }
             catch (Exception e)
@@ -94,8 +109,6 @@ namespace ZPG
         {
             return playerStartPosition;
         }
-
-        // 🧱 Typové rozpoznávače znaků podle legendy:
 
         private bool IsWall(char c) => c >= 'o' && c <= 'z';
 
