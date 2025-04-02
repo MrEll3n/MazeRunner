@@ -1,30 +1,25 @@
-﻿using System.Runtime.InteropServices;
 using OpenTK.Mathematics;
+using System.Runtime.InteropServices;
 
 namespace ZPG
 {
-    /// <summary>
-    /// Struktura pro vrchol skládající se z pozice a barvy. Využívá třídu OpenTK.Mathematics.Vector3
-    /// </summary>
-    [StructLayout(LayoutKind.Sequential, Pack = 64)]
+    [StructLayout(LayoutKind.Sequential)]
     public struct VertexGL
     {
         public Vector3 position;
-        public Vector3 color;
+        public Vector2 texCoord;
 
-        public VertexGL(Vector3 position, ColorRGB color)
+        public VertexGL(Vector3 pos, Vector2 uv)
         {
-            this.position = new OpenTK.Mathematics.Vector3((float)position.X, (float)position.Y, (float)position.Z);
-            this.color = new OpenTK.Mathematics.Vector3((float)color.R, (float)color.G, (float)color.B);
+            position = pos;
+            texCoord = uv;
         }
 
-        /// <summary>
-        /// Vrátí velikost struktury v bytech
-        /// </summary>
-        /// <returns></returns>
-        public static int SizeOf()
+        public static int SizeOf() => Marshal.SizeOf<VertexGL>();
+
+        public float[] ToArray()
         {
-            return Marshal.SizeOf(typeof(VertexGL));
+            return new float[] { position.X, position.Y, position.Z, texCoord.X, texCoord.Y };
         }
     }
 }

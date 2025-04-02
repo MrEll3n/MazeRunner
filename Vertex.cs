@@ -1,27 +1,21 @@
-﻿using System.ComponentModel;
 using OpenTK.Mathematics;
 
 namespace ZPG
 {
-    /// <summary>
-    /// Vrchol obsahující pozici a barvu
-    /// </summary>
     public class Vertex
     {
         public Vector3 Position { get; set; }
+        public Vector2 TexCoord { get; set; }
 
-        public ColorRGB Color { get; set; }
-
-        public Vertex(Vector3 position, ColorRGB color)
+        public Vertex(Vector3 position, Vector2 texCoord)
         {
             Position = position;
-            Color = color;
+            TexCoord = texCoord;
         }
 
-        public override string ToString()
+        public float[] ToArray()
         {
-            return $"{Position} {Color}";
+            return new float[] { Position.X, Position.Y, Position.Z, TexCoord.X, TexCoord.Y };
         }
-
     }
 }

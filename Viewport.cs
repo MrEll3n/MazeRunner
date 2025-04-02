@@ -1,11 +1,11 @@
-﻿using OpenTK.Graphics.OpenGL;
+using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 
 namespace ZPG
 {
     /// <summary>
-    /// Viewport umožňuje namapovat normalizované souřadnice zařízení (-1, 1) do části kontrolky pomocí 
-    /// normalizovaných souřadnic okna (0, 1) a zpět. 
+    /// Viewport umožňuje namapovat normalizované souřadnice zařízení (-1, 1) do části kontrolky pomocí
+    /// normalizovaných souřadnic okna (0, 1) a zpět.
     /// </summary>
     public class Viewport
     {
@@ -34,8 +34,6 @@ namespace ZPG
         /// </summary>
         public Window Window { get; set; } = null!;
 
-        private float _macMultiplier = 1.0f;
-
         public Viewport() { }
 
         /// <summary>
@@ -61,7 +59,7 @@ namespace ZPG
         /// </summary>
         public void Clear()
         {
-            GL.ClearColor(0, 0, 0, 0);
+            GL.ClearColor(1, 0, 1, 0);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         }
 

@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using OpenTK.Mathematics;
 
 namespace ZPG
@@ -11,41 +6,70 @@ namespace ZPG
     {
         public Cube()
         {
-            // Vrcholy
-            Vertices.Add(new Vertex(new Vector3(-1, -1, -1), new ColorRGB(0.1, 0.1, 0.1))); // 0
-            Vertices.Add(new Vertex(new Vector3(1, -1, -1), new ColorRGB(1, 0, 0)));         // 1
-            Vertices.Add(new Vertex(new Vector3(1, 1, -1), new ColorRGB(1, 1, 0)));         // 2
-            Vertices.Add(new Vertex(new Vector3(-1, 1, -1), new ColorRGB(0, 1, 0)));        // 3
-
-            Vertices.Add(new Vertex(new Vector3(-1, -1, 1), new ColorRGB(0, 0, 1)));        // 4
-            Vertices.Add(new Vertex(new Vector3(1, -1, 1), new ColorRGB(1, 0, 1)));         // 5
-            Vertices.Add(new Vertex(new Vector3(1, 1, 1), new ColorRGB(1, 1, 1)));          // 6
-            Vertices.Add(new Vertex(new Vector3(-1, 1, 1), new ColorRGB(0, 1, 1)));         // 7
+            // Vrcholy – každá stěna má vlastní set 4 vrcholů kvůli UVGL.Enable(EnableCap.Texture2D);
+            // Přední stěna (+Z)
+            Vertices.Add(new Vertex(new Vector3(-1, -1, 1), new Vector2(0, 0)));
+            Vertices.Add(new Vertex(new Vector3(1, -1, 1), new Vector2(1, 0)));
+            Vertices.Add(new Vertex(new Vector3(1, 1, 1), new Vector2(1, 1)));
+            Vertices.Add(new Vertex(new Vector3(-1, 1, 1), new Vector2(0, 1)));
 
             // Zadní stěna (-Z)
-            Triangles.Add(new Triangle(0, 2, 1));
-            Triangles.Add(new Triangle(0, 3, 2));
-
-            // Pravá stěna (+X)
-            Triangles.Add(new Triangle(1, 6, 5));
-            Triangles.Add(new Triangle(1, 2, 6));
-
-            // Přední stěna (+Z)
-            Triangles.Add(new Triangle(5, 6, 7));
-            Triangles.Add(new Triangle(5, 7, 4));
+            Vertices.Add(new Vertex(new Vector3(1, -1, -1), new Vector2(0, 0)));
+            Vertices.Add(new Vertex(new Vector3(-1, -1, -1), new Vector2(1, 0)));
+            Vertices.Add(new Vertex(new Vector3(-1, 1, -1), new Vector2(1, 1)));
+            Vertices.Add(new Vertex(new Vector3(1, 1, -1), new Vector2(0, 1)));
 
             // Levá stěna (-X)
-            Triangles.Add(new Triangle(4, 7, 3));
-            Triangles.Add(new Triangle(4, 3, 0));
+            Vertices.Add(new Vertex(new Vector3(-1, -1, -1), new Vector2(0, 0)));
+            Vertices.Add(new Vertex(new Vector3(-1, -1, 1), new Vector2(1, 0)));
+            Vertices.Add(new Vertex(new Vector3(-1, 1, 1), new Vector2(1, 1)));
+            Vertices.Add(new Vertex(new Vector3(-1, 1, -1), new Vector2(0, 1)));
+
+            // Pravá stěna (+X)
+            Vertices.Add(new Vertex(new Vector3(1, -1, 1), new Vector2(0, 0)));
+            Vertices.Add(new Vertex(new Vector3(1, -1, -1), new Vector2(1, 0)));
+            Vertices.Add(new Vertex(new Vector3(1, 1, -1), new Vector2(1, 1)));
+            Vertices.Add(new Vertex(new Vector3(1, 1, 1), new Vector2(0, 1)));
 
             // Horní stěna (+Y)
-            Triangles.Add(new Triangle(3, 7, 6));
-            Triangles.Add(new Triangle(3, 6, 2));
+            Vertices.Add(new Vertex(new Vector3(-1, 1, 1), new Vector2(0, 0)));
+            Vertices.Add(new Vertex(new Vector3(1, 1, 1), new Vector2(1, 0)));
+            Vertices.Add(new Vertex(new Vector3(1, 1, -1), new Vector2(1, 1)));
+            Vertices.Add(new Vertex(new Vector3(-1, 1, -1), new Vector2(0, 1)));
 
             // Spodní stěna (-Y)
-            Triangles.Add(new Triangle(4, 0, 1));
-            Triangles.Add(new Triangle(4, 1, 5));
+            Vertices.Add(new Vertex(new Vector3(-1, -1, -1), new Vector2(0, 0)));
+            Vertices.Add(new Vertex(new Vector3(1, -1, -1), new Vector2(1, 0)));
+            Vertices.Add(new Vertex(new Vector3(1, -1, 1), new Vector2(1, 1)));
+            Vertices.Add(new Vertex(new Vector3(-1, -1, 1), new Vector2(0, 1)));
+
+            // Každá stěna = 2 trojúhelníky (6 vrcholových indexů)
+
+            // Front
+            Triangles.Add(new Triangle(0, 1, 2));
+            Triangles.Add(new Triangle(0, 2, 3));
+
+            // Back
+            Triangles.Add(new Triangle(4, 5, 6));
+            Triangles.Add(new Triangle(4, 6, 7));
+
+            // Left
+            Triangles.Add(new Triangle(8, 9, 10));
+            Triangles.Add(new Triangle(8, 10, 11));
+
+            // Right
+            Triangles.Add(new Triangle(12, 13, 14));
+            Triangles.Add(new Triangle(12, 14, 15));
+
+            // Top
+            Triangles.Add(new Triangle(16, 17, 18));
+            Triangles.Add(new Triangle(16, 18, 19));
+
+            // Bottom
+            Triangles.Add(new Triangle(20, 21, 22));
+            Triangles.Add(new Triangle(20, 22, 23));
+
+            Construct();
         }
     }
-
 }

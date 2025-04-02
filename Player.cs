@@ -16,10 +16,10 @@ namespace ZPG
 
         private readonly PlayerController controller;
 
-        public Player(Vector3 startPosition, float aspectRatio)
+        public Player(Vector3 startPosition, Window window)
         {
             Position = startPosition;
-            Camera = new Camera(Position + new Vector3(0, 1.7f, 0), aspectRatio);
+            Camera = new Camera(Position + new Vector3(0, 1.7f, 0)) { Window = window };
             controller = new PlayerController(this);
         }
 
@@ -38,7 +38,7 @@ namespace ZPG
             if (IsOnGround)
             {
                 Velocity = new Vector3(Velocity.X, 0, Velocity.Z);
-                Velocity += new Vector3(0, velocityY, 0); // ⚠ přímo nastavíme výchozí rychlost vzhůru
+                Velocity += new Vector3(0, velocityY, 0); // přímo nastavíme výchozí rychlost vzhůru
                 IsOnGround = false;
             }
         }

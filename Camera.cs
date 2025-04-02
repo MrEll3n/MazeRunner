@@ -5,25 +5,18 @@ namespace ZPG
     public class Camera
     {
         private float fovDegrees = 90f; // ✅ FOV stored in degrees now
-        private float ncp = 1f;
+        private float ncp = 0.1f;
         private float fcp = 100f;
 
         public Vector3 Position { get; set; } = Vector3.Zero;
         public float rx = 0;
         public float ry = 0;
 
-        public Viewport Viewport;
+        public Window Window;
 
-        public Camera(Vector3 startPosition, float aspectRatio)
+        public Camera(Vector3 startPosition)
         {
             Position = startPosition;
-            this.Viewport = new Viewport()
-            {
-                Width = 1,
-                Height = aspectRatio,
-                Left = 0,
-                Top = 0
-            };
         }
 
         public Vector3 Front =>
@@ -60,7 +53,7 @@ namespace ZPG
         {
             get
             {
-                float ratio = Viewport.Width / Viewport.Height;
+                float ratio = Window.Width / Window.Height;
                 float fovRadians = MathHelper.DegreesToRadians(fovDegrees);
                 return Matrix4.CreatePerspectiveFieldOfView(fovRadians, ratio, ncp, fcp);
             }
