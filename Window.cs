@@ -155,8 +155,8 @@ namespace ZPG
             shader.SetUniform("projection", Matrix4.Identity);
             shader.SetUniform("lightPos", player.Position);
             shader.SetUniform("lightDir", player.Camera.Front);
-            shader.SetUniform("cutOff", MathF.Cos(MathHelper.DegreesToRadians(12.5f)));
-            shader.SetUniform("outerCutOff", MathF.Cos(MathHelper.DegreesToRadians(17.5f)));
+            shader.SetUniform("cutOff", MathF.Cos(MathHelper.DegreesToRadians(20f)));
+            shader.SetUniform("outerCutOff", MathF.Cos(MathHelper.DegreesToRadians(35f)));
             shader.SetUniform("viewPos", player.Camera.Position);
         }
 
@@ -182,21 +182,24 @@ namespace ZPG
             base.OnRenderFrame(args);
 
             viewport.Set();
-            // GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             viewport.Clear();
 
-            mapReader.GetWalls().ForEach(wall => wall.Draw(player.Camera));
+            var shader = mapReader.GetWalls().First().Shader;
 
+            // Reflektor hráče (svítilna)
+            player.Flashlight.Apply(shader);
+
+            // Vykresli stěny
+            mapReader.GetWalls().ForEach(wall => wall.Draw(player.Camera));
 
             SwapBuffers();
         }
 
         protected override void OnUpdateFrame(FrameEventArgs args)
         {
-            float playerSpeed = 4f;
-
             base.OnUpdateFrame(args);
 
+            float playerSpeed = 4f;
             float dt = (float)args.Time;
 
             Vector3 input = Vector3.Zero;
@@ -214,7 +217,7 @@ namespace ZPG
             if (input.LengthSquared > 0)
             {
                 Vector3 moveDir = (flatForward * input.Z + flatRight * input.X).Normalized();
-                player.MoveToward(moveDir * playerSpeed);
+                player.MoveAndSlideMeshBased(moveDir * playerSpeed, mapReader.GetWalls(), dt);
             }
 
             if (isJumping && player.IsOnGround)

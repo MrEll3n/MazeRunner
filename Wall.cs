@@ -4,15 +4,17 @@ namespace ZPG
 {
     public class Wall : Model
     {
+        public float w, h, d;
+
         public Wall() : this(2.0f, 3.0f, 2.0f) // Default dimensions: width = 2m, height = 3m, depth = 2m
         {
         }
 
         public Wall(float width, float height, float depth)
         {
-            float w = width / 2f;
-            float h = height;
-            float d = depth / 2f;
+            w = width / 2f;
+            h = height;
+            d = depth / 2f;
 
             // Add vertices with positions and UVs (TexCoord)
             // Front face (+Z)
@@ -75,7 +77,20 @@ namespace ZPG
             Triangles.Add(new Triangle(20, 21, 22));
             Triangles.Add(new Triangle(20, 22, 23));
 
+            ComputeNormals(Vertices, Triangles);
+
             Construct();
+        }
+
+        public (Vector3 min, Vector3 max) GetAABB()
+        {
+            float halfWidth = w / (float)2.0f;
+            float halfDepth = d / (float)2.0f;
+            float height = h / (float)2.0f;
+
+            Vector3 min = Position + new Vector3(-halfWidth, 0, -halfDepth);
+            Vector3 max = Position + new Vector3(halfWidth, height, halfDepth);
+            return (min, max);
         }
     }
 }

@@ -52,18 +52,46 @@ namespace ZPG
             }
             GL.BufferData(BufferTarget.ElementArrayBuffer, eboData.Count * sizeof(int), eboData.ToArray(), BufferUsageHint.StaticDraw);
 
-            // Vertex attribute pointers
             int stride = VertexGL.SizeOf();
 
-            // Position - layout(location = 0)
+            // Position
             GL.EnableVertexAttribArray(0);
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, stride, 0);
 
-            // TexCoord - layout(location = 1)
+            // TexCoord
             GL.EnableVertexAttribArray(1);
             GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, stride, 3 * sizeof(float));
 
+            // Normal
+            GL.EnableVertexAttribArray(2);
+            GL.VertexAttribPointer(2, 3, VertexAttribPointerType.Float, false, stride, 5 * sizeof(float));
+
             GL.BindVertexArray(0);
+        }
+
+        protected void ComputeNormals(IList<Vertex> vertices, IList<Triangle> triangles)
+        {
+            for (int i = 0; i < vertices.Count; i++)
+                vertices[i].Normal = Vector3.Zero;
+
+            foreach (var tri in triangles)
+            {
+                Vector3 v0 = vertices[tri.I1].Position;
+                Vector3 v1 = vertices[tri.I2].Position;
+                Vector3 v2 = vertices[tri.I3].Position;
+
+                Vector3 edge1 = v1 - v0;
+                Vector3 edge2 = v2 - v0;
+
+                Vector3 faceNormal = Vector3.Cross(edge1, edge2).Normalized();
+
+                vertices[tri.I1].Normal += faceNormal;
+                vertices[tri.I2].Normal += faceNormal;
+                vertices[tri.I3].Normal += faceNormal;
+            }
+
+            for (int i = 0; i < vertices.Count; i++)
+                vertices[i].Normal = vertices[i].Normal.Normalized();
         }
 
         public void Draw(Camera camera)
@@ -85,7 +113,7 @@ namespace ZPG
             }
 
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
-            
+
             GL.BindVertexArray(vao);
 
             /*
@@ -117,7 +145,7 @@ namespace ZPG
             }
             */
 
-            
+
 
             // GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Fill);
             GL.DrawElements(PrimitiveType.Triangles, Triangles.Count * 3, DrawElementsType.UnsignedInt, IntPtr.Zero);
