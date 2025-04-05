@@ -26,6 +26,9 @@ namespace ZPG
 
         private bool isJumping = false;
 
+        private int frameCount = 0;
+        private double fpsTimer = 0;
+
         private int wallTexture; // textura pro stěny
 
         public Window(string[] args) : base(GameWindowSettings.Default, NativeWindowSettings.Default)
@@ -193,6 +196,16 @@ namespace ZPG
             mapReader.GetWalls().ForEach(wall => wall.Draw(player.Camera));
 
             SwapBuffers();
+
+            frameCount++;
+            fpsTimer += args.Time;
+
+            if (fpsTimer >= 1.0)
+            {
+                Title = $"MazeRunner - FPS: {frameCount}";
+                frameCount = 0;
+                fpsTimer = 0;
+            }
         }
 
         protected override void OnUpdateFrame(FrameEventArgs args)
