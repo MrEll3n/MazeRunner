@@ -232,7 +232,7 @@ namespace ZPG
         {
             base.OnUpdateFrame(args);
 
-            float playerSpeed = 4f;
+            float playerSpeed = 1.4f;
             float dt = (float)args.Time;
 
             Vector3 input = Vector3.Zero;

@@ -8,7 +8,7 @@ namespace ZPG
         public Vector3 Velocity { get; set; } = Vector3.Zero;
         public Vector3 Acceleration { get; set; } = Vector3.Zero;
 
-        public float Mass { get; set; } = 1.0f;
+        public float Mass { get; set; } = 80.0f;
 
         public bool IsOnGround { get; set; } = true;
 
