@@ -19,7 +19,7 @@ void main()
     vec3 lightColor = vec3(1.0);
     vec3 texColor = texture(uTexture, TexCoord).rgb;
 
-    vec3 ambient = 0.1 * texColor;
+    vec3 ambient = 0.5 * texColor;
 
     vec3 lightDirNorm = normalize(lightPos - FragPos);
     float diff = max(dot(norm, lightDirNorm), 0.0);

@@ -96,14 +96,12 @@ namespace ZPG
 
         public void Draw(Camera camera)
         {
-            // Console.WriteLine($"Drawing model at {Position} with {Vertices.Count} vertices, {Triangles.Count} triangles, TextureID: {TextureID}");
-
-            Matrix4 translate = Matrix4.CreateTranslation(Position);
+            Matrix4 modelMatrix = Matrix4.CreateTranslation(Position);
 
             Shader.Use();
             Shader.SetUniform("projection", camera.Projection);
             Shader.SetUniform("view", camera.View);
-            Shader.SetUniform("model", translate);
+            Shader.SetUniform("model", modelMatrix);
 
             if (TextureID > 0)
             {
@@ -112,53 +110,9 @@ namespace ZPG
                 Shader.SetUniform("uTexture", 0);
             }
 
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
-
             GL.BindVertexArray(vao);
-
-            /*
-            if (Changed)
-            {
-                var vertexData = GenVertexGLData();
-                var triangleData = GenTriangleGLData();
-
-                Console.WriteLine($"Updating vertex buffer with {vertexData.Length} vertices");
-                Console.WriteLine($"Updating index buffer with {triangleData.Length} triangles");
-
-                GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
-                if (vertexData.Length > vboSize)
-                {
-                    vboSize *= 2;
-                    GL.BufferData(BufferTarget.ArrayBuffer, vboSize * VertexGL.SizeOf(), IntPtr.Zero, BufferUsageHint.DynamicDraw);
-                }
-                GL.BufferSubData(BufferTarget.ArrayBuffer, IntPtr.Zero, vertexData.Length * VertexGL.SizeOf(), vertexData);
-
-                GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
-                if (triangleData.Length > eboSize)
-                {
-                    eboSize *= 2;
-                    GL.BufferData(BufferTarget.ElementArrayBuffer, eboSize * TriangleGL.SizeOf(), IntPtr.Zero, BufferUsageHint.DynamicDraw);
-                }
-                GL.BufferSubData(BufferTarget.ElementArrayBuffer, IntPtr.Zero, triangleData.Length * TriangleGL.SizeOf(), triangleData);
-
-                Changed = false;
-            }
-            */
-
-
-
-            // GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Fill);
             GL.DrawElements(PrimitiveType.Triangles, Triangles.Count * 3, DrawElementsType.UnsignedInt, IntPtr.Zero);
-
             GL.BindVertexArray(0);
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
-
-            // Debug first UV coord
-            // var debugData = GenVertexGLData();
-            // Console.WriteLine("UV prvního vrcholu: " + debugData[0].texCoord);
-            // Console.WriteLine("UV druhého vrcholu: " + debugData[1].texCoord);
-            // Console.WriteLine("UV třetího vrcholu: " + debugData[2].texCoord);
-            // Console.WriteLine("UV třetího vrcholu: " + debugData[3].texCoord);
         }
 
         #region Dispose

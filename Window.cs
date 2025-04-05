@@ -29,7 +29,9 @@ namespace ZPG
         private int frameCount = 0;
         private double fpsTimer = 0;
 
-        private int wallTexture; // textura pro stěny
+        private int wallTexture;
+        private int floorTexture;
+        private int ceilingTexture;
 
         public Window(string[] args) : base(GameWindowSettings.Default, NativeWindowSettings.Default)
         {
@@ -134,13 +136,31 @@ namespace ZPG
                 mapReader.GetWalls().Add(testWall);
             }
 
+            // Texture loading
             this.wallTexture = TextureLoader.LoadTexture("textures/wall.png");
+            this.floorTexture = TextureLoader.LoadTexture("textures/carpet.jpg");
+            this.ceilingTexture = TextureLoader.LoadTexture("textures/ceiling.png");
 
             foreach (var wall in mapReader.GetWalls())
             {
                 wall.Shader = shader;
                 wall.TextureID = wallTexture;
             }
+
+            Quad floor = new Quad(128, 128, 0f, true)
+            {
+                Shader = shader,
+                TextureID = floorTexture
+            };
+
+            Quad ceiling = new Quad(128, 128, 3f, false)
+            {
+                Shader = shader,
+                TextureID = ceilingTexture
+            };
+
+            mapReader.GetRenderables().Add(floor);
+            mapReader.GetRenderables().Add(ceiling);
 
             // Hráč
             Vector3 startPosition = mapReader.GetPlayerStartPosition();
@@ -193,7 +213,7 @@ namespace ZPG
             player.Flashlight.Apply(shader);
 
             // Vykresli stěny
-            mapReader.GetWalls().ForEach(wall => wall.Draw(player.Camera));
+            mapReader.GetRenderables().ForEach(model => model.Draw(player.Camera));
 
             SwapBuffers();
 

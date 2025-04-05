@@ -8,6 +8,8 @@ namespace ZPG
     public class MapReader
     {
         private readonly List<Wall> walls = new();
+        private List<Model> renderables = new();
+        public List<Model> GetRenderables() => renderables;
         private readonly Shader shader;
         private readonly int wallLength = 2;
         public Vector3 playerStartPosition { get; private set; }
@@ -65,6 +67,7 @@ namespace ZPG
                                 Position = position
                             };
                             walls.Add(wall);
+                            renderables.Add(wall);
                         }
                         else if (IsStartPosition(c))
                         {
