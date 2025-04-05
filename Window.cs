@@ -153,6 +153,11 @@ namespace ZPG
             shader.SetUniform("model", Matrix4.Identity);
             shader.SetUniform("view", Matrix4.Identity);
             shader.SetUniform("projection", Matrix4.Identity);
+            shader.SetUniform("lightPos", player.Position);
+            shader.SetUniform("lightDir", player.Camera.Front);
+            shader.SetUniform("cutOff", MathF.Cos(MathHelper.DegreesToRadians(12.5f)));
+            shader.SetUniform("outerCutOff", MathF.Cos(MathHelper.DegreesToRadians(17.5f)));
+            shader.SetUniform("viewPos", player.Camera.Position);
         }
 
         protected override void OnMouseMove(MouseMoveEventArgs e)
@@ -181,6 +186,7 @@ namespace ZPG
             viewport.Clear();
 
             mapReader.GetWalls().ForEach(wall => wall.Draw(player.Camera));
+
 
             SwapBuffers();
         }
