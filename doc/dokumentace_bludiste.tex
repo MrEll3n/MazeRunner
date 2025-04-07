@@ -7,6 +7,29 @@
 \geometry{margin=2.5cm}
 \usepackage{hyperref}
 \usepackage{titlesec}
+\usepackage{listings}
+\usepackage{xcolor}
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{orange},
+  breaklines=true,
+  frame=single,
+  columns=fullflexible,
+  keepspaces=true,
+  language=C,
+  morekeywords={Vector3, return, float, if, else, static, out},
+  extendedchars=true,
+  inputencoding=utf8,
+  literate=%
+    {á}{{\'a}}1 {č}{{\v{c}}}1 {ď}{{\v{d}}}1 {é}{{\'e}}1 {ě}{{\v{e}}}1
+    {í}{{\'i}}1 {ň}{{\v{n}}}1 {ó}{{\'o}}1 {ř}{{\v{r}}}1 {š}{{\v{s}}}1
+    {ť}{{\v{t}}}1 {ú}{{\'u}}1 {ů}{{\r{u}}}1 {ý}{{\'y}}1 {ž}{{\v{z}}}1
+    {Á}{{\'A}}1 {Č}{{\v{C}}}1 {Ď}{{\v{D}}}1 {É}{{\'E}}1 {Ě}{{\v{E}}}1
+    {Í}{{\'I}}1 {Ň}{{\v{N}}}1 {Ó}{{\'O}}1 {Ř}{{\v{R}}}1 {Š}{{\v{S}}}1
+    {Ť}{{\v{T}}}1 {Ú}{{\'U}}1 {Ů}{{\r{U}}}1 {Ý}{{\'Y}}1 {Ž}{{\v{Z}}}1
+}
 \titleformat{\section}{\large\bfseries}{\thesection.}{1em}{}
 
 \begin{document}
@@ -42,6 +65,89 @@ Byl implementován systém kolizí postavený na testování průniku koule s tr
 
 Po každém kroku je upravena pozice hráče podle kolizních korekcí a \texttt{Velocity} je znovu vypočtena podle skutečného posunu, čímž se udržuje fyzikální konzistence.
 
+\newpage
+Následující metoda určuje nejbližší bod ke kouli na trojúhelníku ve 3D prostoru. Používá se při testu průniku:
+
+\begin{lstlisting}
+private static Vector3 ClosestPointOnTriangle(Vector3 p, Vector3 a, Vector3 b, Vector3 c)
+{
+    Vector3 ab = b - a;
+    Vector3 ac = c - a;
+    Vector3 ap = p - a;
+
+    float d1 = Vector3.Dot(ab, ap);
+    float d2 = Vector3.Dot(ac, ap);
+    if (d1 <= 0 && d2 <= 0) return a;
+
+    Vector3 bp = p - b;
+    float d3 = Vector3.Dot(ab, bp);
+    float d4 = Vector3.Dot(ac, bp);
+    if (d3 >= 0 && d4 <= d3) return b;
+
+    float vc = d1 * d4 - d3 * d2;
+    if (vc <= 0 && d1 >= 0 && d3 <= 0)
+    {
+        float v = d1 / (d1 - d3);
+        return a + ab * v;
+    }
+
+    Vector3 cp = p - c;
+    float d5 = Vector3.Dot(ab, cp);
+    float d6 = Vector3.Dot(ac, cp);
+    if (d6 >= 0 && d5 <= d6) return c;
+
+    float vb = d5 * d2 - d1 * d6;
+    if (vb <= 0 && d2 >= 0 && d6 <= 0)
+    {
+        float w = d2 / (d2 - d6);
+        return a + ac * w;
+    }
+
+    float va = d3 * d6 - d5 * d4;
+    if (va <= 0 && (d4 - d3) >= 0 && (d5 - d6) >= 0)
+    {
+        float w = (d4 - d3) / ((d4 - d3) + (d5 - d6));
+        return b + (c - b) * w;
+    }
+
+    Vector3 n = Vector3.Cross(ab, ac);
+    float denom = Vector3.Dot(n, n);
+    float u = Vector3.Dot(Vector3.Cross(ap, ac), n) / denom;
+    float v2 = Vector3.Dot(Vector3.Cross(ab, ap), n) / denom;
+
+    return a + ab * u + ac * v2;
+}
+\end{lstlisting}
+
+\newpage
+\noindent
+Další metoda kontroluje, zda koule zasahuje do trojúhelníku, a v případě kolize vrací vektor vytlačení:
+
+\begin{lstlisting}
+public static bool SphereIntersectsTriangle(Vector3 center, float radius, Vector3 a, Vector3 b, Vector3 c, out Vector3 pushOut)
+{
+    pushOut = Vector3.Zero;
+
+    // Najdi nejbližší bod na trojúhelníku k centru koule
+    Vector3 closest = ClosestPointOnTriangle(center, a, b, c);
+    Vector3 diff = center - closest;
+    float distSq = diff.LengthSquared;
+
+    // Pokud je vzdálenost menší než poloměr, nastala kolize
+    if (distSq < radius * radius)
+    {
+        float dist = MathF.Sqrt(distSq);
+        Vector3 normal = dist > 0 ? diff / dist : Vector3.UnitY; // pokud je střed přímo na trojúhelníku
+        float penetration = radius - dist;
+        pushOut = normal * penetration; // vektor, kterým se koule vytlačí z kolize
+        return true;
+    }
+
+    return false;
+}
+\end{lstlisting}
+
+\newpage
 \subsection*{Osvětlení: Svítilna}
 Scéna je osvětlena reflektorem ve výšce 2{,}05 m s depresí 2°. Světlo sleduje pozici a směr hráče, připomíná baterku. Úhel světelného kužele je menší než FOV pozorovatele a osvětluje jen přímý výhled.
 
