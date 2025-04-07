@@ -72,7 +72,7 @@ namespace ZPG
             if (!player.IsOnGround)
             {
                 Vector3 horizontal = new Vector3(player.Velocity.X, 0, player.Velocity.Z);
-                Vector3 drag = horizontal * 3.0f; // síla odporu – můžeš ladit
+                Vector3 drag = horizontal * 2.0f; // síla odporu – můžeš ladit
                 player.Velocity -= new Vector3(drag.X, 0, drag.Z) * dt;
             }
 

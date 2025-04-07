@@ -59,11 +59,17 @@ namespace ZPG
         public void MoveAndSlideMeshBased(Vector3 desiredVelocity, IEnumerable<Wall> walls, float deltaTime)
         {
             float radius = 0.3f;
+
+            // Uložení původní pozice pro výpočet skutečného posunu
+            Vector3 oldPosition = Position;
+
+            // Pohyb podle požadované rychlosti
             Vector3 move = desiredVelocity * deltaTime;
             Vector3 newPos = Position + move;
 
             Vector3 totalCorrection = Vector3.Zero;
 
+            // Kolizní kontrola a korekce
             foreach (var wall in walls)
             {
                 foreach (var tri in wall.Triangles)
@@ -79,8 +85,13 @@ namespace ZPG
                 }
             }
 
+            // Aplikace korekcí a nové pozice
             newPos += totalCorrection;
             Position = newPos;
+
+            // Výpočet skutečného pohybu a aktualizace horizontální složky Velocity
+            Vector3 realMovement = Position - oldPosition;
+            Velocity = new Vector3(realMovement.X / deltaTime, Velocity.Y, realMovement.Z / deltaTime);
         }
     }
 }
