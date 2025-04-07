@@ -1,118 +1,57 @@
 # MazeRunner 3D
 
-> Projekt do předmětu **KIV/ZPG** – jednoduchá 3D hra postavená nad OpenTK.  
-> Obsahuje pohyb hráče, svítilnu, kolize s prostředím a vykreslování na základě mapy.
+> A project for the **KIV/ZPG** course – a simple 3D game built on OpenTK.  
+> Features player movement, a flashlight, environment collisions, and map-based level loading.
 
 ![screenshot](preview.png)
 
 ---
 
-## 🧠 Hlavní vlastnost
-Volitelné argumenty:
-- `--fullscreen` – spustí hru v režimu celé obrazovky
-- `--mac` – aktivuje Retina režim (měřítko viewportu 2.0)
+## 🧠 Key Features
 
---
-Volitelné argumenty:
-- `--fullscreen` – spustí hru v režimu celé obrazovky
-- `--mac` – aktivuje Retina režim (měřítko viewportu 2.0)
+Optional launch arguments:
+- `--fullscreen` – starts the game in fullscreen mode
+- `--mac` – enables Retina display mode (viewport scale 2.0)
 
 ---
 
-## 🔗 Repozitář
+## 🔗 Repository
 
-👉 [https://github.com/uzivatel/maze-runner](https://github.com/uzivatel/maze-runner)
-
----
-
-## 🧑‍💻 Autor
-
-Projekt vytvořen jako součást semestrální práce předmětu **KIV/ZPG** – Základy počítačové grafiky  
-**[Tvé jméno / přezdívka]**  
-Fakulta aplikovaných věd, Západočeská univerzita
-
----
--
-
-## 📁 Struktura
-
-- `ZPG/` – hlavní namespace se všemi třídami
-  - `Player`, `Camera`, `MapReader`, `Model`, `Wall`, `Shader`, `Viewport`, ...
-- `shaders/` – GLSL vertex a fragment shadery
-- `textures/` – textury pro stěny, podlahy atd.
-- `map.txt` – znaková mapa prostředí
+👉 [https://github.com/MrEll3n/maze-runner](https://github.com/MrEll3n/maze-runner)
 
 ---
 
-## 🔗 Repozitář
+## 🧑‍💻 Author
 
-👉 [https://github.com/uzivatel/maze-runner](https://github.com/uzivatel/maze-runner)
-
----
-
-## 🧑‍💻 Autor
-
-Projekt vytvořen jako součást semestrální práce předmětu **KIV/ZPG** – Základy počítačové grafiky  
-**[Tvé jméno / přezdívka]**  
-Fakulta aplikovaných věd, Západočeská univerzita
-
----
-i
-
-- 🌌 3D prostředí s kamerou z pohledu první osoby (FPS).
-- 💡 Reflektor (baterka) vycházející z hráče s úhlem a kuželem světla.
-- 📦 Detekce kolizí hráče proti trojúhelníkovému mesh modelu stěn.
-- 🗺️ Načítání mapy ze souboru (znaková reprezentace).
-- 🎮 Podpora myši a klávesnice (WASD + myš + mezerník).
-- 🧱 Stěny, podlaha, strop s texturováním.
+This project was created as a semester assignment for the **KIV/ZPG** course – Fundamentals of Computer Graphics  
+**[Vít Novotný]**  
+Faculty of Applied Sciences, University of West Bohemia
 
 ---
 
-## ⌨️ Ovládání
-
-| Klávesa         | Akce                      |
-|-----------------|---------------------------|
-| `W / A / S / D` | Pohyb vpřed/do stran      |
-| `Myš`           | Otočení kamery            |
-| `Space`         | Skok                      |
-| `Esc`           | Uzamknutí/odemknutí myši  |
-| `Alt + Enter`   | Přepnutí Fullscreen       |
-| `Alt + Q`       | Ukončení                  |
-| `Kolečko`       | Změna FOV (zoom)          |
+- 🌌 3D environment with first-person camera.
+- 💡 Flashlight (spotlight) emitted from the player with adjustable cone angle.
+- 📦 Collision detection against a triangle mesh of wall geometry.
+- 🗺️ Map loading from a text file (character-based representation).
+- 🎮 Mouse and keyboard support (WASD + mouse + spacebar).
+- 🧱 Textured walls, floors, and ceilings.
 
 ---
 
-## 🔧 Spuštění
+## ⌨️ Controls
 
-Vyžaduje .NET 6.0+ a knihovnu [OpenTK](https://github.com/opentk/opentk).
-
-
-Volitelné argumenty:
-- `--fullscreen` – spustí hru v režimu celé obrazovky
-- `--mac` – aktivuje Retina režim (měřítko viewportu 2.0)
-
----
-
-## 📁 Struktura
-
-- `ZPG/` – hlavní namespace se všemi třídami
-  - `Player`, `Camera`, `MapReader`, `Model`, `Wall`, `Shader`, `Viewport`, ...
-- `shaders/` – GLSL vertex a fragment shadery
-- `textures/` – textury pro stěny, podlahy atd.
-- `map.txt` – znaková mapa prostředí
+| Key              | Action                         |
+|------------------|--------------------------------|
+| `W / A / S / D`  | Move forward/sideways          |
+| `Mouse`          | Rotate camera                  |
+| `Space`          | Jump                           |
+| `Esc`            | Lock/unlock mouse              |
+| `Alt + Enter`    | Toggle fullscreen              |
+| `Alt + Q`        | Exit the game                  |
+| `Scroll Wheel`   | Adjust FOV (zoom in/out)       |
 
 ---
 
-## 🔗 Repozitář
+## 🔧 How to Run
 
-👉 [https://github.com/uzivatel/maze-runner](https://github.com/uzivatel/maze-runner)
-
----
-
-## 🧑‍💻 Autor
-
-Projekt vytvořen jako součást semestrální práce předmětu **KIV/ZPG** – Základy počítačové grafiky  
-**[Tvé jméno / přezdívka]**  
-Fakulta aplikovaných věd, Západočeská univerzita
-
----
+Requires [.NET 6.0+](https://dotnet.microsoft.com/) and the [OpenTK](https://github.com/opentk/opentk) library.
