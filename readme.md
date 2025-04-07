@@ -19,16 +19,6 @@ Volitelné argumenty:
 
 ---
 
-## 📁 Struktura
-
-- `ZPG/` – hlavní namespace se všemi třídami
-  - `Player`, `Camera`, `MapReader`, `Model`, `Wall`, `Shader`, `Viewport`, ...
-- `shaders/` – GLSL vertex a fragment shadery
-- `textures/` – textury pro stěny, podlahy atd.
-- `map.txt` – znaková mapa prostředí
-
----
-
 ## 🔗 Repozitář
 
 👉 [https://github.com/uzivatel/maze-runner](https://github.com/uzivatel/maze-runner)
