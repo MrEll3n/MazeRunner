@@ -1,3 +1,4 @@
-bin/
-obj/
+src/bin/
+src/obj/
+net9.0/
 .DS_Store
