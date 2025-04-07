@@ -8,71 +8,99 @@ using System.Runtime.InteropServices;
 
 namespace ZPG
 {
+    /// <summary>
+    /// Abstraktní základ pro 3D modely – obsahuje geometrii (vrcholy, trojúhelníky), pozici, texturu a logiku vykreslení.
+    /// </summary>
     public abstract class Model : IDisposable
     {
+        /// <summary>
+        /// Shader, který se použije při vykreslení modelu.
+        /// </summary>
         public Shader Shader;
+
+        /// <summary>
+        /// Pozice modelu ve světovém prostoru.
+        /// </summary>
         public Vector3 Position = new Vector3(0, 0, 0);
+
+        /// <summary>
+        /// ID textury aplikované na model.
+        /// </summary>
         public int TextureID { get; set; } = -1;
 
+        /// <summary>
+        /// Vrcholy modelu (pozice, normála, tex. souřadnice).
+        /// </summary>
         public BindingList<Vertex> Vertices { get; set; } = new();
+
+        /// <summary>
+        /// Trojúhelníky tvořící povrch modelu (indexy do pole vrcholů).
+        /// </summary>
         public BindingList<Triangle> Triangles { get; set; } = new();
 
-        int vbo;
-        int vboSize = 10;
+        // OpenGL buffery
+        int vbo;        // Vertex Buffer Object
+        int ebo;        // Element Buffer Object
+        int vao;        // Vertex Array Object
 
-        int ebo;
-        int eboSize = 10;
-
-        int vao;
-        // public bool Changed { get; set; } = true;
-
+        /// <summary>
+        /// Inicializuje GPU buffery (VBO, EBO, VAO) a připraví data pro vykreslení.
+        /// </summary>
         public void Construct()
         {
-            // VAO setup
+            // VAO – uchovává vazby atributů a bufferů
             vao = GL.GenVertexArray();
             GL.BindVertexArray(vao);
 
-            // VBO setup
+            // VBO – naplnění vrcholových dat
             vbo = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
-            List<float> vboData = new List<float>();
-            for (int i = 0; i < Vertices.Count; i++)
-                vboData.AddRange(Vertices[i].ToArray());
+
+            var vboData = new List<float>();
+            foreach (var v in Vertices)
+                vboData.AddRange(v.ToArray());
+
             GL.BufferData(BufferTarget.ArrayBuffer, vboData.Count * sizeof(float), vboData.ToArray(), BufferUsageHint.StaticDraw);
 
-            // EBO setup
+            // EBO – indexy trojúhelníků
             ebo = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
-            List<int> eboData = new List<int>();
-            for (int i = 0; i < Triangles.Count; i++)
+
+            var eboData = new List<int>();
+            foreach (var tri in Triangles)
             {
-                eboData.Add(Triangles[i].I1);
-                eboData.Add(Triangles[i].I2);
-                eboData.Add(Triangles[i].I3);
+                eboData.Add(tri.I1);
+                eboData.Add(tri.I2);
+                eboData.Add(tri.I3);
             }
+
             GL.BufferData(BufferTarget.ElementArrayBuffer, eboData.Count * sizeof(int), eboData.ToArray(), BufferUsageHint.StaticDraw);
 
-            int stride = VertexGL.SizeOf();
+            int stride = VertexGL.SizeOf(); // velikost jednoho vrcholu v bajtech
 
-            // Position
+            // Atributy vrcholu:
+            // Pozice (vec3) → location 0
             GL.EnableVertexAttribArray(0);
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, stride, 0);
 
-            // TexCoord
+            // TexCoord (vec2) → location 1
             GL.EnableVertexAttribArray(1);
             GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, stride, 3 * sizeof(float));
 
-            // Normal
+            // Normála (vec3) → location 2
             GL.EnableVertexAttribArray(2);
             GL.VertexAttribPointer(2, 3, VertexAttribPointerType.Float, false, stride, 5 * sizeof(float));
 
-            GL.BindVertexArray(0);
+            GL.BindVertexArray(0); // odpojení VAO
         }
 
+        /// <summary>
+        /// Automatický výpočet normál z trojúhelníků pro nasvícení.
+        /// </summary>
         protected void ComputeNormals(IList<Vertex> vertices, IList<Triangle> triangles)
         {
-            for (int i = 0; i < vertices.Count; i++)
-                vertices[i].Normal = Vector3.Zero;
+            foreach (var v in vertices)
+                v.Normal = Vector3.Zero;
 
             foreach (var tri in triangles)
             {
@@ -90,10 +118,14 @@ namespace ZPG
                 vertices[tri.I3].Normal += faceNormal;
             }
 
-            for (int i = 0; i < vertices.Count; i++)
-                vertices[i].Normal = vertices[i].Normal.Normalized();
+            foreach (var v in vertices)
+                v.Normal = v.Normal.Normalized();
         }
 
+        /// <summary>
+        /// Vykreslí model pomocí aktuálního shaderu a kamery.
+        /// </summary>
+        /// <param name="camera">Aktuální kamera pro nastavení view/projection matic.</param>
         public void Draw(Camera camera)
         {
             Matrix4 modelMatrix = Matrix4.CreateTranslation(Position);
@@ -107,7 +139,7 @@ namespace ZPG
             {
                 GL.ActiveTexture(TextureUnit.Texture0);
                 GL.BindTexture(TextureTarget.Texture2D, TextureID);
-                Shader.SetUniform("uTexture", 0);
+                Shader.SetUniform("uTexture", 0); // sampler2D uniform
             }
 
             GL.BindVertexArray(vao);
@@ -115,9 +147,13 @@ namespace ZPG
             GL.BindVertexArray(0);
         }
 
-        #region Dispose
+        #region IDisposable
 
-        bool disposed = false;
+        private bool disposed = false;
+
+        /// <summary>
+        /// Uvolní OpenGL buffery při zničení objektu.
+        /// </summary>
         public void Dispose()
         {
             Dispose(true);
@@ -128,8 +164,7 @@ namespace ZPG
         {
             if (!disposed)
             {
-                if (disposing) { }
-
+                // uvolnění nativních zdrojů (OpenGL objekty)
                 GL.DeleteBuffer(vbo);
                 GL.DeleteBuffer(ebo);
                 GL.DeleteVertexArray(vao);
@@ -142,3 +177,4 @@ namespace ZPG
         #endregion
     }
 }
+

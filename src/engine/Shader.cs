@@ -3,19 +3,29 @@ using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace ZPG;
 
 /// <summary>
-/// Stará se o načítání shaderů a práci s nimi
+/// Třída pro práci s OpenGL shadery – načítání, kompilace, linkování, použití a práce s uniformami.
 /// </summary>
 public class Shader : IDisposable
 {
+    /// <summary>
+    /// ID OpenGL shader programu.
+    /// </summary>
     public int ID { get; private set; }
 
+    /// <summary>
+    /// Slovník uniform proměnných a jejich lokací.
+    /// </summary>
     private readonly Dictionary<string, int> uniforms = new();
 
+    /// <summary>
+    /// Vytvoří nový shaderový program z daných souborů s vertex a fragment shadery.
+    /// </summary>
+    /// <param name="vertexPath">Cesta k vertex shaderu.</param>
+    /// <param name="fragmentPath">Cesta k fragment shaderu.</param>
     public Shader(string vertexPath, string fragmentPath)
     {
         int vertexShader = CompileShader(vertexPath, ShaderType.VertexShader);
@@ -29,13 +39,12 @@ public class Shader : IDisposable
     }
 
     /// <summary>
-    /// Překlad Shaderu
+    /// Přeloží shader ze souboru daného typu.
     /// </summary>
-    /// <param name="source"></param>
-    /// <param name="type"></param>
-    /// <param name="filePath"></param>
-    /// <returns></returns>
-    /// <exception cref="Exception"></exception>
+    /// <param name="filePath">Cesta k souboru se shaderem.</param>
+    /// <param name="type">Typ shaderu (vertex, fragment atd.).</param>
+    /// <returns>ID shaderu.</returns>
+    /// <exception cref="Exception">Vyvolá výjimku při chybě překladu.</exception>
     private int CompileShader(string filePath, ShaderType type)
     {
         string source = File.ReadAllText(filePath);
@@ -55,10 +64,10 @@ public class Shader : IDisposable
     }
 
     /// <summary>
-    /// Linkování shaderů do výsledného programu.
+    /// Prolinkuje všechny přeložené shadery do jednoho programu.
     /// </summary>
-    /// <param name="shaders"></param>
-    /// <exception cref="Exception"></exception>
+    /// <param name="shaders">Pole ID shaderů.</param>
+    /// <exception cref="Exception">Vyvolá výjimku při chybě linkování.</exception>
     private void LinkShader(params int[] shaders)
     {
         ID = GL.CreateProgram();
@@ -77,7 +86,8 @@ public class Shader : IDisposable
     }
 
     /// <summary>
-    /// Použije program. Nejprve je třeba použít program, pak je možné nastavovat uniforms
+    /// Aktivuje shaderový program pro použití při vykreslování.
+    /// Musí být voláno před nastavováním uniforms.
     /// </summary>
     public void Use()
     {
@@ -85,32 +95,30 @@ public class Shader : IDisposable
     }
 
     /// <summary>
-    /// Nahraje adresy všech uniforms ze shaderu
+    /// Načte lokace všech aktivních uniform proměnných ve shaderu a uloží je do slovníku.
     /// </summary>
     private void LoadUniforms()
     {
         GL.GetProgram(ID, GetProgramParameterName.ActiveUniforms, out int uniformCount);
 
         for (int i = 0; i < uniformCount; i++)
-        {            
+        {
             GL.GetActiveUniform(ID, i, 256, out _, out _, out _, out string name);
-
-            string uniformName = name.ToString();
-            int location = GL.GetUniformLocation(ID, uniformName);
+            int location = GL.GetUniformLocation(ID, name);
 
             if (location != -1)
             {
-                uniforms[uniformName] = location;
-                Console.WriteLine($"Loaded uniform: {uniformName} -> {location}");
+                uniforms[name] = location;
+                Console.WriteLine($"Loaded uniform: {name} -> {location}");
             }
         }
     }
 
     /// <summary>
-    /// Zjistí adresu uniform proměnné ze slovníku, pokud v něm je
+    /// Získá pozici (location) uniformy dle jejího jména.
     /// </summary>
-    /// <param name="name">Jméno uniform</param>
-    /// <returns>Adresa</returns>
+    /// <param name="name">Název uniformy ve shaderu.</param>
+    /// <returns>Lokace uniformy nebo -1, pokud nebyla nalezena.</returns>
     public int GetUniformLocation(string name)
     {
         if (uniforms.TryGetValue(name, out int location))
@@ -121,8 +129,11 @@ public class Shader : IDisposable
     }
 
     /// <summary>
-    /// Inteligentní metoda pro nastavování uniform proměnných.
+    /// Nastaví hodnotu uniform proměnné podle typu (int, float, vektor, matice).
     /// </summary>
+    /// <typeparam name="T">Typ dat (např. float, Vector3, Matrix4).</typeparam>
+    /// <param name="name">Jméno uniformy.</param>
+    /// <param name="value">Hodnota, která se má zapsat.</param>
     public void SetUniform<T>(string name, T value)
     {
         int location = GetUniformLocation(name);
@@ -139,7 +150,7 @@ public class Shader : IDisposable
             case Vector2 v:
                 GL.Uniform2(location, v);
                 break;
-            case OpenTK.Mathematics.Vector3 v:
+            case Vector3 v:
                 GL.Uniform3(location, v);
                 break;
             case Vector4 v:
@@ -153,23 +164,29 @@ public class Shader : IDisposable
         }
     }
 
+    #region IDisposable – správná správa prostředků
 
-    #region IDisposable
     private bool disposed = false;
 
+    /// <summary>
+    /// Uvolní prostředky spojené s tímto shaderem.
+    /// </summary>
     public void Dispose()
     {
         Dispose(true);
         GC.SuppressFinalize(this);
     }
 
+    /// <summary>
+    /// Uvnitřní metoda pro správu uvolňování zdrojů.
+    /// </summary>
     protected virtual void Dispose(bool disposing)
     {
         if (!disposed)
         {
             if (disposing)
             {
-                // Zde by šlo čistit další managed zdroje, pokud by byly
+                // Uvolni managed prostředky zde (pokud nějaké přibyly)
             }
 
             GL.DeleteProgram(ID);
@@ -178,9 +195,13 @@ public class Shader : IDisposable
         }
     }
 
+    /// <summary>
+    /// Finalizér volaný garbage collectorem při zničení instance.
+    /// </summary>
     ~Shader()
     {
         Dispose(false);
     }
+
     #endregion
 }

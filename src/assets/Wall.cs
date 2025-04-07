@@ -2,21 +2,48 @@ using OpenTK.Mathematics;
 
 namespace ZPG
 {
+    /// <summary>
+    /// Reprezentuje 3D kvádr (stěnu) s texturovanými stěnami, vhodný např. pro kolizní nebo vizuální reprezentaci zdi.
+    /// </summary>
     public class Wall : Model
     {
-        public float w, h, d;
+        /// <summary>
+        /// Poloviční šířka stěny (původní šířka dělená dvěma).
+        /// </summary>
+        public float w;
 
-        public Wall() : this(2.0f, 3.0f, 2.0f) // Default dimensions: width = 2m, height = 3m, depth = 2m
+        /// <summary>
+        /// Výška stěny.
+        /// </summary>
+        public float h;
+
+        /// <summary>
+        /// Poloviční hloubka stěny (původní hloubka dělená dvěma).
+        /// </summary>
+        public float d;
+
+        /// <summary>
+        /// Vytvoří stěnu s výchozími rozměry 2x3x2 metry.
+        /// </summary>
+        public Wall() : this(2.0f, 3.0f, 2.0f)
         {
         }
 
+        /// <summary>
+        /// Vytvoří stěnu s danými rozměry.
+        /// </summary>
+        /// <param name="width">Celková šířka stěny (osa X).</param>
+        /// <param name="height">Celková výška stěny (osa Y).</param>
+        /// <param name="depth">Celková hloubka stěny (osa Z).</param>
         public Wall(float width, float height, float depth)
         {
             w = width / 2f;
             h = height;
             d = depth / 2f;
 
-            // Add vertices with positions and UVs (TexCoord)
+            // Přidání vrcholů pro každou stěnu kvádru s pozicí a UV souřadnicemi
+            // Každá stěna má 4 vrcholy a tvoří 2 trojúhelníky
+
             // Front face (+Z)
             Vertices.Add(new Vertex(new Vector3(-w, 0, d), new Vector2(0, 0)));  // 0
             Vertices.Add(new Vertex(new Vector3(w, 0, d), new Vector2(1, 0)));   // 1
@@ -53,6 +80,7 @@ namespace ZPG
             Vertices.Add(new Vertex(new Vector3(w, 0, d), new Vector2(1, 1)));   // 22
             Vertices.Add(new Vertex(new Vector3(-w, 0, d), new Vector2(0, 1)));  // 23
 
+            // Přidání trojúhelníků pro každou stranu
             // Front (+Z)
             Triangles.Add(new Triangle(0, 1, 2));
             Triangles.Add(new Triangle(0, 2, 3));
@@ -77,16 +105,23 @@ namespace ZPG
             Triangles.Add(new Triangle(20, 21, 22));
             Triangles.Add(new Triangle(20, 22, 23));
 
+            // Výpočet normál pro osvětlování
             ComputeNormals(Vertices, Triangles);
 
+            // Vytvoření objektu (např. nahrání dat do GPU)
             Construct();
         }
 
+        /// <summary>
+        /// Vrací Axis-Aligned Bounding Box (AABB) této stěny.
+        /// Slouží například ke kolizní detekci.
+        /// </summary>
+        /// <returns>Tuple s minimálním a maximálním bodem kvádru v prostoru.</returns>
         public (Vector3 min, Vector3 max) GetAABB()
         {
-            float halfWidth = w / (float)2.0f;
-            float halfDepth = d / (float)2.0f;
-            float height = h / (float)2.0f;
+            float halfWidth = w / 2.0f;
+            float halfDepth = d / 2.0f;
+            float height = h / 2.0f;
 
             Vector3 min = Position + new Vector3(-halfWidth, 0, -halfDepth);
             Vector3 max = Position + new Vector3(halfWidth, height, halfDepth);

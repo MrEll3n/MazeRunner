@@ -2,11 +2,19 @@ using OpenTK.Mathematics;
 
 namespace ZPG
 {
+    /// <summary>
+    /// Reprezentuje jednotkovou texturovanou krychli (cube), tvořenou 6 stěnami a 12 trojúhelníky.
+    /// Každá stěna má samostatné vrcholy kvůli odlišným UV souřadnicím.
+    /// </summary>
     public class Cube : Model
     {
+        /// <summary>
+        /// Vytvoří novou instanci krychle s centrem v počátku a rozměry 2x2x2 (od -1 do +1).
+        /// </summary>
         public Cube()
         {
-            // Vrcholy – každá stěna má vlastní set 4 vrcholů kvůli UVGL.Enable(EnableCap.Texture2D);
+            // Každá stěna má svůj vlastní set 4 vrcholů kvůli texturovacím souřadnicím.
+
             // Přední stěna (+Z)
             Vertices.Add(new Vertex(new Vector3(-1, -1, 1), new Vector2(0, 0)));
             Vertices.Add(new Vertex(new Vector3(1, -1, 1), new Vector2(1, 0)));
@@ -43,32 +51,33 @@ namespace ZPG
             Vertices.Add(new Vertex(new Vector3(1, -1, 1), new Vector2(1, 1)));
             Vertices.Add(new Vertex(new Vector3(-1, -1, 1), new Vector2(0, 1)));
 
-            // Každá stěna = 2 trojúhelníky (6 vrcholových indexů)
+            // Každá stěna je tvořena 2 trojúhelníky (6 indexů)
 
-            // Front
+            // Přední stěna
             Triangles.Add(new Triangle(0, 1, 2));
             Triangles.Add(new Triangle(0, 2, 3));
 
-            // Back
+            // Zadní stěna
             Triangles.Add(new Triangle(4, 5, 6));
             Triangles.Add(new Triangle(4, 6, 7));
 
-            // Left
+            // Levá stěna
             Triangles.Add(new Triangle(8, 9, 10));
             Triangles.Add(new Triangle(8, 10, 11));
 
-            // Right
+            // Pravá stěna
             Triangles.Add(new Triangle(12, 13, 14));
             Triangles.Add(new Triangle(12, 14, 15));
 
-            // Top
+            // Horní stěna
             Triangles.Add(new Triangle(16, 17, 18));
             Triangles.Add(new Triangle(16, 18, 19));
 
-            // Bottom
+            // Spodní stěna
             Triangles.Add(new Triangle(20, 21, 22));
             Triangles.Add(new Triangle(20, 22, 23));
 
+            // Inicializace a vytvoření objektu
             Construct();
         }
     }

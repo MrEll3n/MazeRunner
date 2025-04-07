@@ -6,39 +6,63 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace ZPG
 {
+    /// <summary>
+    /// Hlavní okno hry – zajišťuje celý životní cyklus hry, vykreslování a vstupy.
+    /// </summary>
     public class Window : GameWindow
     {
+        /// <summary>Načítání mapy ze souboru a převod znaků na objekty.</summary>
         public MapReader mapReader;
+
+        /// <summary>Viewport určuje oblast vykreslování a poměr stran.</summary>
         public Viewport viewport;
 
+        /// <summary>Projekční matice kamery (perspektiva).</summary>
         public Matrix4 projection = new Matrix4();
+
+        /// <summary>View matice – pozice a rotace kamery ve scéně.</summary>
         public Matrix4 view = new Matrix4();
 
+        /// <summary>Instance hráče – pozice, kamera, pohyb, kolize.</summary>
         private Player player;
 
+        /// <summary>Šířka okna (používá se pro přepočet viewportu).</summary>
         public int Width { get; private set; } = 800;
+
+        /// <summary>Výška okna.</summary>
         public int Height { get; private set; } = 600;
 
-        private string[] _args { get; set; }
-
+        /// <summary>Přepínač zachycení myši (pro FPS ovládání).</summary>
         private bool _mouseGrabbed = true;
+
+        /// <summary>Měřítko viewportu (např. Retina displeje na Macu).</summary>
         private float vpScale = 1.0f;
 
+        /// <summary>Indikace, že hráč právě drží mezerník (skok).</summary>
         private bool isJumping = false;
 
+        /// <summary>Počítadlo snímků za sekundu.</summary>
         private int frameCount = 0;
+
+        /// <summary>Časová akumulace pro výpočet FPS.</summary>
         private double fpsTimer = 0;
 
-        private int wallTexture;
-        private int floorTexture;
-        private int ceilingTexture;
+        /// <summary>ID textur použitých ve světě (stěna, podlaha, strop).</summary>
+        private int wallTexture, floorTexture, ceilingTexture;
 
+        /// <summary>Předané argumenty při spuštění (např. --fullscreen).</summary>
+        private string[] _args { get; set; }
+
+        /// <summary>
+        /// Vytvoření hlavního okna s defaultním nastavením a zpracováním argumentů.
+        /// </summary>
         public Window(string[] args) : base(GameWindowSettings.Default, NativeWindowSettings.Default)
         {
             CursorState = CursorState.Grabbed;
             _args = args;
         }
 
+        /// <summary>Zpracování klávesových vstupů (přepnutí fullscreen, myši, skok).</summary>
         protected override void OnKeyDown(KeyboardKeyEventArgs e)
         {
             base.OnKeyDown(e);
@@ -75,6 +99,7 @@ namespace ZPG
             }
         }
 
+        /// <summary>Zpracování uvolnění klávesy (např. konec skoku).</summary>
         protected override void OnKeyUp(KeyboardKeyEventArgs e)
         {
             base.OnKeyUp(e);
@@ -85,6 +110,9 @@ namespace ZPG
             }
         }
 
+        /// <summary>
+        /// Inicializace OpenGL, načtení shaderů, mapy, textur a vytvoření objektů.
+        /// </summary>
         protected override void OnLoad()
         {
             base.OnLoad();
@@ -183,6 +211,7 @@ namespace ZPG
             shader.SetUniform("viewPos", player.Camera.Position);
         }
 
+        /// <summary>Změna směru pohledu hráče podle pohybu myši.</summary>
         protected override void OnMouseMove(MouseMoveEventArgs e)
         {
             base.OnMouseMove(e);
@@ -193,6 +222,7 @@ namespace ZPG
             player.Camera.RotateY(-e.DeltaX / 250f);
         }
 
+        /// <summary>Změna FOV hráče pomocí kolečka myši.</summary>
         protected override void OnMouseWheel(MouseWheelEventArgs e)
         {
             base.OnMouseWheel(e);
@@ -200,6 +230,9 @@ namespace ZPG
             player.Camera.ChangeFOV(e.OffsetY < 0 ? +1.0f : -1.0f);
         }
 
+        /// <summary>
+        /// Hlavní vykreslovací smyčka – aplikuje světlo, vykreslí všechny modely a počítá FPS.
+        /// </summary>
         protected override void OnRenderFrame(FrameEventArgs args)
         {
             base.OnRenderFrame(args);
@@ -228,6 +261,9 @@ namespace ZPG
             }
         }
 
+        /// <summary>
+        /// Aktualizace logiky hry – pohyb hráče, zpracování vstupů, skákání.
+        /// </summary>
         protected override void OnUpdateFrame(FrameEventArgs args)
         {
             base.OnUpdateFrame(args);
@@ -261,6 +297,7 @@ namespace ZPG
             player.Update(dt);
         }
 
+        /// <summary>Aktualizace velikosti okna (viewport, poměr stran).</summary>
         protected override void OnResize(ResizeEventArgs e)
         {
             base.OnResize(e);
@@ -268,11 +305,13 @@ namespace ZPG
             Height = e.Height;
         }
 
+        /// <summary>Uvolnění prostředků při ukončení aplikace.</summary>
         protected override void OnUnload()
         {
             base.OnUnload();
         }
 
+        /// <summary>Nastaví okno do režimu fullscreen a upraví viewport pro macOS.</summary>
         private void SetFullscreenMode()
         {
             WindowState = WindowState.Fullscreen;
@@ -290,6 +329,7 @@ namespace ZPG
             }
         }
 
+        /// <summary>Nastaví okno zpět do okna (windowed mode).</summary>
         private void SetWindowedMode()
         {
             WindowState = WindowState.Normal;
