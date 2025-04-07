@@ -4,7 +4,7 @@ namespace ZPG
 {
     public class Camera
     {
-        private float fovDegrees = 90f; // ✅ FOV stored in degrees now
+        private float fovDegrees = 90f; // FOV stored in degrees now
         private float ncp = 0.1f;
         private float fcp = 100f;
 
@@ -30,7 +30,7 @@ namespace ZPG
 
         public void SetFOV(float degrees)
         {
-            fovDegrees = Math.Clamp(degrees, 30f, 120f); // ⬅ reasonable range
+            fovDegrees = Math.Clamp(degrees, 30f, 120f); // reasonable range
         }
 
         public void ChangeFOV(float deltaDegrees)
@@ -39,10 +39,10 @@ namespace ZPG
         }
 
         public void RotateX(float a)
-        {   
-            float oneRad = MathF.PI/180; // 1 degree in radians
+        {
+            float oneRad = MathF.PI / 180; // 1 degree in radians
             rx += a;
-            rx = Math.Clamp(rx, (-(MathF.PI / 2) +  oneRad), ((MathF.PI / 2) - oneRad));
+            rx = Math.Clamp(rx, (-(MathF.PI / 2) + oneRad), ((MathF.PI / 2) - oneRad));
         }
 
         public void RotateY(float a)

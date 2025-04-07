@@ -19,7 +19,6 @@ namespace ZPG
 
         public void AddForce(Vector3 force)
         {
-            //Console.WriteLine("Force applied: " + force);
             forces.Add(force);
         }
 

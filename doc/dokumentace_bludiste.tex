@@ -1,0 +1,94 @@
+
+\documentclass[12pt,a4paper]{article}
+\usepackage[czech]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{hyperref}
+\usepackage{titlesec}
+\titleformat{\section}{\large\bfseries}{\thesection.}{1em}{}
+
+\begin{document}
+
+\noindent
+Souhlasím s vystavením této semestrální práce na stránkách katedry informatiky a výpočetní techniky a jejímu využití pro prezentaci pracoviště.
+
+\vspace{1cm}
+
+\begin{flushleft}
+\textbf{Jméno:} Vít Novotný \\
+\textbf{Datum:} \today \\
+\textbf{E-mail:} vnovotny@students.zcu.cz \\
+\textbf{Studijní číslo:} A23B0412P
+\end{flushleft}
+
+\vspace{0.5cm}
+
+\section*{Dokumentace k semestrální práci: 3D bludiště v OpenTK}
+
+\section{Popis projektu}
+Aplikace implementuje základní 3D bludiště v prostředí OpenGL pomocí knihovny OpenTK, včetně kompletní fyziky pohybu hráče, kolizí, osvětlení a práce s texturami. Cílem bylo vytvořit interaktivní first-person prostředí, které je stabilní, fyzikálně konzistentní a odpovídá specifikaci zadání.
+
+\section{Klíčové části implementace}
+
+\subsection*{Pohyb hráče a fyzika}
+Pohyb hráče je založen na jednoduché fyzikální simulaci – akcelerace je odvozena ze součtu sil působících na hráče. Ovládání reaguje na vstupy (WSAD, Shift pro běh, mezerník pro skok) a generuje síly, které určují směr pohybu.
+
+Hráč se pohybuje konstantní rychlostí bez ohledu na kombinaci směrových kláves. Zároveň je implementována korektní simulace skákání s gravitací a zachycením dopadu.
+
+\subsection*{Kolizní systém}
+Byl implementován systém kolizí postavený na testování průniku koule s trojúhelníky pomocí metody ``move and slide''. Tento systém zajišťuje plynulý pohyb podél stěn bez zasekávání nebo poskakování a brání opuštění mapy, i v případě, že některé zdi chybí.
+
+Po každém kroku je upravena pozice hráče podle kolizních korekcí a \texttt{Velocity} je znovu vypočtena podle skutečného posunu, čímž se udržuje fyzikální konzistence.
+
+\subsection*{Osvětlení: Svítilna}
+Scéna je osvětlena reflektorem ve výšce 2{,}05 m s depresí 2°. Světlo sleduje pozici a směr hráče, připomíná baterku. Úhel světelného kužele je menší než FOV pozorovatele a osvětluje jen přímý výhled.
+
+Implementace využívá OpenGL spotlight s nastavením směru a cutoff úhlu.
+
+\subsection*{Texturování}
+Zdi a podlaha jsou texturované pomocí klasického vzorkování. Načítání textur je provedeno s ohledem na HW podporu – ve výchozím nastavení je použito lineární filtrování s mipmapami.
+
+\subsection*{FPS Counter}
+Na obrazovce je zobrazeno počítadlo snímků za vteřinu, které počítá, kolik snímků proběhlo za poslední jednu vteřinu. Výstup je nezávislý na snímkové frekvenci a zajišťuje reálný odhad výkonu.
+
+\subsection*{First-person pohled a ovládání}
+Kamera sleduje hráče z pohledu první osoby. Myší lze otáčet pohled (vertikálně i horizontálně), přičemž rotace je omezena v rozsahu -90° až +90° ve vertikále. FOV lze dynamicky měnit kolečkem myši mezi 30° a 120°, výchozí hodnota je 90°.
+
+\section{Implementované prvky dle zadání}
+
+\subsection*{Povinná část}
+\begin{itemize}
+    \item Pravoúhlá síť bludiště
+    \item Fyzikálně založený pohyb hráče (rovnoměrná rychlost, vektorový směr)
+    \item Kolize se stěnami bez poskakování a průchodů
+    \item Zajištění hranic mapy i bez zdi
+    \item Plynulé řízení pohledu myší, omezení přetočení
+    \item Vše nezávislé na FPS
+    \item Osvětlení svítilnou dle specifikace
+    \item FPS counter
+    \item Měřítko a geometrie dle zadání (1 jednotka = 1 m)
+\end{itemize}
+
+\subsection*{Volitelná část}
+\begin{itemize}
+    \item Texturování zdí a podlahy
+    \item Svítilna (projekční světlo)
+    \item FPS měření
+    \item Pokročilý kolizní systém
+\end{itemize}
+
+\section{Poznámky k ovládání}
+\begin{itemize}
+    \item \texttt{W, A, S, D} – pohyb vpřed, vlevo, vzad, vpravo
+    \item \texttt{Shift} – běh
+    \item \texttt{Mezerník} – skok
+    \item \texttt{Myš} – otáčení pohledu
+    \item \texttt{Kolečko} – změna FOV (30°–120°)
+\end{itemize}
+
+\section{Závěr}
+Implementace naplňuje požadavky zadání a zároveň ukazuje silnou stránku ve fyzikálně korektním chování hráče, precizních kolizích a světelném modelu. Kód je rozdělen do samostatných modulů, což usnadňuje rozšiřování o další funkce (např. minimapa, AI, grafické efekty).
+
+\end{document}
