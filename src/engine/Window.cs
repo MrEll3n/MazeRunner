@@ -268,34 +268,44 @@ namespace ZPG
         {
             base.OnUpdateFrame(args);
 
-            float playerSpeed = 1.4f;
             float dt = (float)args.Time;
+
+            // === Movement Input ===
+            float playerSpeed = 1.4f;
+            if (KeyboardState.IsKeyDown(Keys.LeftShift))
+                playerSpeed *= 1.8f;
 
             Vector3 input = Vector3.Zero;
             if (KeyboardState.IsKeyDown(Keys.W)) input.Z += 1;
             if (KeyboardState.IsKeyDown(Keys.S)) input.Z -= 1;
-            if (KeyboardState.IsKeyDown(Keys.A)) input.X -= 1;
-            if (KeyboardState.IsKeyDown(Keys.D)) input.X += 1;
-
-            if (KeyboardState.IsKeyDown(Keys.LeftShift)) playerSpeed *= 1.8f;
-
-            Vector3 camForward = player.Camera.Front;
-            Vector3 flatForward = new Vector3(camForward.X, 0, camForward.Z).Normalized();
-            Vector3 flatRight = Vector3.Cross(flatForward, Vector3.UnitY).Normalized();
+            if (KeyboardState.IsKeyDown(Keys.A)) input.X += 1;
+            if (KeyboardState.IsKeyDown(Keys.D)) input.X -= 1;
 
             if (input.LengthSquared > 0)
             {
-                Vector3 moveDir = (flatForward * input.Z + flatRight * input.X).Normalized();
-                player.MoveAndSlideMeshBased(moveDir * playerSpeed, mapReader.GetWalls(), dt);
+                input = input.Normalized();
+
+                Vector3 camForward = player.Camera.Front;
+                Vector3 flatForward = new Vector3(camForward.X, 0, camForward.Z).Normalized();
+                Vector3 flatRight = Vector3.Cross(Vector3.UnitY, flatForward).Normalized();
+
+                Vector3 moveDir = flatForward * input.Z + flatRight * input.X;
+                Vector3 desiredVelocity = moveDir * playerSpeed;
+
+                player.MoveToward(desiredVelocity);
             }
 
+            // === Jump input ===
             if (isJumping && player.IsOnGround)
             {
-                player.Jump(5f);
+                player.Jump(5f); // you can tune the jump force
             }
 
+            // === Physics + collision update ===
+            player.Controller.CurrentWalls = mapReader.GetWalls();
             player.Update(dt);
         }
+
 
         /// <summary>Aktualizace velikosti okna (viewport, poměr stran).</summary>
         protected override void OnResize(ResizeEventArgs e)
