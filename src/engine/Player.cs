@@ -6,6 +6,7 @@ namespace ZPG
 {
     public class Player
     {
+        
         public Vector3 Position { get; set; }
         public Vector3 Velocity { get; set; } = Vector3.Zero;
         public Vector3 Acceleration { get; set; } = Vector3.Zero;
@@ -20,6 +21,8 @@ namespace ZPG
         public float CollisionRadius = 1.0f;
 
         private readonly PlayerController controller;
+        
+        public List<Model> TriggerModels { get; set; } = new();
 
         public Player(Vector3 startPosition, Window window)
         {
@@ -89,12 +92,30 @@ namespace ZPG
             {
                 IsOnGround = false;
             }
+            
+            // Collision-based teleport trigger
+            foreach (var model in TriggerModels)
+            {
+                if (model is TeleportTrigger trigger)
+                {
+                    float distance = (Position - trigger.Position).Length;
+                    if (distance < 1.0f)
+                    {
+                        trigger.OnPlayerEnter(this);
+                        break;
+                    }
+                }
+            }
 
+            
             // Update camera
             Camera.Position = Position + new Vector3(0, CameraHeight, 0);
 
             // Debug
-            Console.WriteLine($"[Update] Velocity: {Velocity} (|v| = {Velocity.Length:F2})");
+            //Console.WriteLine($"[Update] Velocity: {Velocity} (|v| = {Velocity.Length:F2})");
+            
+            Vector2i tileText = new Vector2i((int)(Position.X / 2), (int)(Position.Z / 2));
+            Console.WriteLine($"Player tile: {tileText}");
         }
 
         public void MoveAndSlideMeshBased(Vector3 desiredVelocity, IEnumerable<Wall> walls, float deltaTime)
@@ -128,7 +149,7 @@ namespace ZPG
                 Velocity -= Vector3.Dot(Velocity, normal) * normal;
             }
 
-            Console.WriteLine($"[MoveAndSlide] Pos: {Position}, Vel: {Velocity}, Speed: {Velocity.Length:F2}");
+            //Console.WriteLine($"[MoveAndSlide] Pos: {Position}, Vel: {Velocity}, Speed: {Velocity.Length:F2}");
         }
     }
 }

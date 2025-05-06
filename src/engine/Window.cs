@@ -147,6 +147,25 @@ namespace ZPG
 
             // Shader
             Shader shader = new Shader("shaders/basic.vert", "shaders/basic.frag");
+            
+            // Načtení všech textur pohromadě
+            this.wallTexture = TextureLoader.LoadTexture("textures/wall.png");
+            this.floorTexture = TextureLoader.LoadTexture("textures/carpet.jpg");
+            this.ceilingTexture = TextureLoader.LoadTexture("textures/ceiling.png");
+            
+            // Přidejte speciální texturu pro teleporty
+            int teleportTextureID = TextureLoader.LoadTexture("textures/teleport.jpg");
+            
+            // Pokud textury/teleport.png neexistuje, použijeme jinou texturu
+            if (teleportTextureID == 0)
+            {
+                Console.WriteLine("Teleport texture not found, using wall texture instead");
+                teleportTextureID = wallTexture;
+            }
+            else
+            {
+                Console.WriteLine($"Loaded teleport texture with ID: {teleportTextureID}");
+            }
 
             // Načti mapu
             mapReader = new MapReader(shader);
@@ -164,17 +183,24 @@ namespace ZPG
                 mapReader.GetWalls().Add(testWall);
             }
 
-            // Texture loading
-            this.wallTexture = TextureLoader.LoadTexture("textures/wall.png");
-            this.floorTexture = TextureLoader.LoadTexture("textures/carpet.jpg");
-            this.ceilingTexture = TextureLoader.LoadTexture("textures/ceiling.png");
-
+            // Nastavení textur pro stěny
             foreach (var wall in mapReader.GetWalls())
             {
                 wall.Shader = shader;
                 wall.TextureID = wallTexture;
             }
 
+            // Nastavení textur a vlastností pro teleporty
+            foreach (var trigger in mapReader.GetTeleportTriggers())
+            {
+                trigger.Shader = shader; // nebo vlastní shader pro teleporty, pokud máte
+                trigger.TextureID = teleportTextureID;
+                
+                // Vypiš informace o teleportu pro debugování
+                Console.WriteLine($"Teleport {trigger.Id} at {trigger.Position}, target: {trigger.TargetPosition}, texture: {trigger.TextureID}");
+            }
+
+            // Vytvoření podlahy a stropu
             Quad floor = new Quad(128, 128, 0f, true)
             {
                 Shader = shader,
@@ -193,13 +219,18 @@ namespace ZPG
             // Hráč
             Vector3 startPosition = mapReader.GetPlayerStartPosition();
             player = new Player(startPosition, this);
+            
+            // Propojení hráče s teleporty
+            player.TriggerModels = mapReader.GetTeleportTriggers().Cast<Model>().ToList();
 
+            // Výpis užitečných informací pro debugování
             Console.WriteLine($"Wall texture path exists: {File.Exists("textures/wall.png")}");
+            Console.WriteLine($"Teleport texture path exists: {File.Exists("textures/teleport.png")}");
             Console.WriteLine($"Map file exists: {File.Exists("map.txt")}");
             Console.WriteLine($"Loaded {mapReader.GetWalls().Count} walls from map");
+            Console.WriteLine($"Loaded {mapReader.GetTeleportTriggers().Count} teleports from map");
 
-            // After creating shader in Window.OnLoad
-            Console.WriteLine($"Shader ID: {shader.ID}");
+            // Nastavení shaderu
             shader.Use();
             shader.SetUniform("model", Matrix4.Identity);
             shader.SetUniform("view", Matrix4.Identity);
@@ -304,6 +335,23 @@ namespace ZPG
             // === Physics + collision update ===
             player.Controller.CurrentWalls = mapReader.GetWalls();
             player.Update(dt);
+            
+            foreach (var trigger in mapReader.GetTeleportTriggers())
+            {
+                float dist = (trigger.Position - player.Position).Length;
+                if (dist < player.CollisionRadius)
+                {
+                    trigger.OnPlayerEnter(player);
+                    break; // Zabraňuje vícenásobnému přepnutí
+                }
+            }
+            
+            
+            // Aktualizace animace teleportů
+            foreach (var trigger in mapReader.GetTeleportTriggers())
+            {
+                trigger.Update(dt);
+            }
         }
 
 

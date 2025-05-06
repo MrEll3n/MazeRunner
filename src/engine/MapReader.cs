@@ -5,49 +5,45 @@ using OpenTK.Mathematics;
 
 namespace ZPG
 {
-    /// <summary>
-    /// Slouží k načítání mapy ze souboru a převodu znakové reprezentace na 3D objekty.
-    /// </summary>
     public class MapReader
     {
         private readonly List<Wall> walls = new();
-        private List<Model> renderables = new();
+        private readonly List<Model> renderables = new();
+        private readonly Dictionary<Vector2i, ITriggerZone> triggerMap = new();
 
-        /// <summary>
-        /// Vrací seznam všech renderovatelných objektů načtených z mapy.
-        /// </summary>
-        public List<Model> GetRenderables() => renderables;
-
+        private readonly Dictionary<char, List<Vector2i>> teleportTilePositions = new();
         private readonly Shader shader;
-
-        /// <summary>
-        /// Délka jednoho "čtverce" ve světových jednotkách (např. 2 metry).
-        /// </summary>
         private readonly int wallLength = 2;
 
-        /// <summary>
-        /// Výchozí pozice hráče podle mapového souboru.
-        /// </summary>
-        public Vector3 playerStartPosition { get; private set; }
+        public Vector3 PlayerStartPosition { get; private set; }
+        public List<Teleport> Teleports { get; private set; } = new();
 
-        /// <summary>
-        /// Inicializuje nový <see cref="MapReader"/> s daným shaderem, který se použije pro objekty.
-        /// </summary>
-        /// <param name="shader">Shader, který se přiřadí novým objektům ze souboru.</param>
+        public List<Wall> GetWalls() => walls;
+        public List<Model> GetRenderables() => renderables;
+        public Vector3 GetPlayerStartPosition() => PlayerStartPosition;
+        public Dictionary<Vector2i, ITriggerZone> GetTriggerMap() => triggerMap;
+
+        public List<TeleportTrigger> GetTeleportTriggers()
+        {
+            List<TeleportTrigger> triggers = new();
+            foreach (var model in renderables)
+            {
+                if (model is TeleportTrigger trigger)
+                    triggers.Add(trigger);
+            }
+            return triggers;
+        }
+
         public MapReader(Shader shader)
         {
             this.shader = shader;
         }
 
-        /// <summary>
-        /// Načte mapu ze souboru a vytvoří 3D objekty podle znaků.
-        /// </summary>
-        /// <param name="filePath">Cesta k mapovému souboru.</param>
         public void ReadFile(string filePath)
         {
             if (!File.Exists(filePath))
             {
-                Console.WriteLine("Soubor nenalezen: " + filePath);
+                Console.WriteLine("File not found: " + filePath);
                 return;
             }
 
@@ -56,19 +52,17 @@ namespace ZPG
                 var lines = File.ReadAllLines(filePath);
                 if (lines.Length < 2)
                 {
-                    Console.WriteLine("Soubor neobsahuje dostatek řádků.");
+                    Console.WriteLine("File doesn't contain enough lines.");
                     return;
                 }
 
-                // Získání rozměrů z prvního řádku (např. "24x17")
                 string[] dimensions = lines[0].Split('x');
                 int width = int.Parse(dimensions[0]);
                 int height = int.Parse(dimensions[1]);
 
-                // Kontrola, že soubor má dostatek řádků pro mapu
                 if (lines.Length - 1 < height)
                 {
-                    Console.WriteLine("Mapový soubor neobsahuje očekávaný počet řádků.");
+                    Console.WriteLine("Map file does not contain expected number of rows.");
                     return;
                 }
 
@@ -78,107 +72,89 @@ namespace ZPG
                     for (int x = 0; x < width; x++)
                     {
                         if (x >= line.Length)
-                            continue; // ochrana proti kratším řádkům
+                            continue;
 
                         char c = line[x];
                         Vector3 position = new Vector3(x * wallLength, 0, z * wallLength);
 
-                        // Rozlišení podle typu znaku
                         if (IsWall(c))
                         {
-                            Wall wall = new()
-                            {
-                                Shader = shader,
-                                Position = position
-                            };
+                            Wall wall = new() { Shader = shader, Position = position };
                             walls.Add(wall);
                             renderables.Add(wall);
                         }
                         else if (IsStartPosition(c))
                         {
-                            playerStartPosition = position;
+                            PlayerStartPosition = position;
                         }
-                        else if (IsLight(c))
+                        else if (IsLight(c)) { }
+                        else if (IsDoor(c)) { }
+                        else if (IsSolidObject(c)) { }
+                        else if (IsEnemy(c)) { }
+                        else if (IsItem(c)) { }
+                        else if (char.IsDigit(c))
                         {
-                            // TODO: Přidání světla
+                            Vector2i tile = new(x, z);
+                            if (!teleportTilePositions.ContainsKey(c))
+                                teleportTilePositions[c] = new List<Vector2i>();
+
+                            teleportTilePositions[c].Add(tile);
+                            Console.WriteLine($"Found teleport '{c}' at tile ({x}, {z})");
                         }
-                        else if (IsDoor(c))
+                    }
+                }
+
+                foreach (var pair in teleportTilePositions)
+                {
+                    var id = pair.Key;
+                    var tiles = pair.Value;
+
+                    if (tiles.Count >= 2)
+                    {
+                        Vector2i sourceTile = tiles[0];
+                        Vector2i targetTile = tiles[1];
+                        Vector3 sourcePosition = new Vector3(sourceTile.X * wallLength, 0, sourceTile.Y * wallLength);
+                        Vector3 targetPosition = new Vector3(targetTile.X * wallLength, 0, targetTile.Y * wallLength);
+
+                        var trigger = new TeleportTrigger
                         {
-                            // TODO: Přidání dveří
-                        }
-                        else if (IsSolidObject(c))
+                            Id = id,
+                            Position = sourcePosition,
+                            TargetPosition = targetPosition,
+                            Shader = shader
+                        };
+
+                        Vector2i tile = new Vector2i(sourceTile.X, sourceTile.Y);
+                        triggerMap[tile] = trigger;
+                        renderables.Add(trigger);
+                        Teleports.Add(new Teleport(id, sourcePosition, targetPosition));
+
+                        Console.WriteLine($"Teleport {id} at {sourcePosition}, target: {targetPosition}");
+
+                        if (tiles.Count > 2)
                         {
-                            // TODO: Pevný objekt (např. sloup, kvádr)
+                            Console.WriteLine($"Teleport '{id}' has more than 2 positions. Only the first 2 will be used.");
                         }
-                        else if (IsEnemy(c))
-                        {
-                            // TODO: Nepřátelská jednotka
-                        }
-                        else if (IsItem(c))
-                        {
-                            // TODO: Sbíratelný předmět
-                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Teleport '{id}' has less than 2 points.");
                     }
                 }
             }
             catch (Exception e)
             {
-                Console.WriteLine("Nepodařilo se načíst soubor:");
+                Console.WriteLine("Failed to read map file:");
                 Console.WriteLine(e.Message);
             }
         }
 
-        /// <summary>
-        /// Vrací seznam všech stěn načtených z mapy.
-        /// </summary>
-        public List<Wall> GetWalls()
-        {
-            return walls;
-        }
-
-        /// <summary>
-        /// Vrací výchozí pozici hráče definovanou v mapě.
-        /// </summary>
-        public Vector3 GetPlayerStartPosition()
-        {
-            return playerStartPosition;
-        }
-
-        // Metody pro rozpoznání typu znaku v mapovém souboru
-
-        /// <summary>
-        /// Vrací true, pokud znak reprezentuje stěnu.
-        /// </summary>
         private bool IsWall(char c) => c >= 'o' && c <= 'z';
-
-        /// <summary>
-        /// Vrací true, pokud znak reprezentuje výchozí pozici hráče.
-        /// </summary>
         private bool IsStartPosition(char c) => c == '@';
-
-        /// <summary>
-        /// Vrací true, pokud znak reprezentuje světelný zdroj.
-        /// </summary>
         private bool IsLight(char c) => c == '*' || c == '^' || c == '!';
-
-        /// <summary>
-        /// Vrací true, pokud znak reprezentuje dveře.
-        /// </summary>
         private bool IsDoor(char c) => c >= 'A' && c <= 'G';
-
-        /// <summary>
-        /// Vrací true, pokud znak reprezentuje nepohyblivý objekt.
-        /// </summary>
         private bool IsSolidObject(char c) => c >= 'H' && c <= 'N';
-
-        /// <summary>
-        /// Vrací true, pokud znak reprezentuje nepřítele.
-        /// </summary>
         private bool IsEnemy(char c) => c >= 'O' && c <= 'R';
-
-        /// <summary>
-        /// Vrací true, pokud znak reprezentuje předmět.
-        /// </summary>
         private bool IsItem(char c) => c >= 'T' && c <= 'Z';
     }
 }
