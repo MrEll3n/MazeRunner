@@ -37,6 +37,7 @@ namespace ZPG
         public MapReader(Shader shader)
         {
             this.shader = shader;
+            Console.WriteLine("[MapReader] Inicializován");
         }
 
         public void ReadFile(string filePath)
@@ -109,63 +110,11 @@ namespace ZPG
                     }
                 }
 
-                // Přidání testovacího teleportu '9' vedle hráče, pokud byl nalezen
-                if (startX.HasValue && startZ.HasValue && width > startX + 2)
-                {
-                    Console.WriteLine("[DEBUG] Přidávám testovací teleport '9' vedle hráče");
+                // Kód pro přidání testovacího teleportu '9' byl odstraněn
+                // Testovací teleporty se nyní vytváří pouze z mapy
 
-                    Vector2i tile1 = new Vector2i(startX.Value + 1, startZ.Value);
-                    Vector2i tile2 = new Vector2i(startX.Value + 2, startZ.Value);
-                    teleportTilePositions['9'] = new List<Vector2i> { tile1, tile2 };
-
-                    Console.WriteLine($"Found teleport '9' at tile ({tile1.X}, {tile1.Y})");
-                    Console.WriteLine($"Found teleport '9' at tile ({tile2.X}, {tile2.Y})");
-                }
-
-                foreach (var pair in teleportTilePositions)
-                {
-                    var id = pair.Key;
-                    var tiles = pair.Value;
-
-                    if (tiles.Count >= 2)
-                    {
-                        Vector2i sourceTile = tiles[0];
-                        Vector2i targetTile = tiles[1];
-
-                        // Posuň teleporty do výšky, aby byly vidět
-                        Vector3 sourcePosition = new Vector3(sourceTile.X * wallLength, 1.0f, sourceTile.Y * wallLength);
-                        Vector3 targetPosition = new Vector3(targetTile.X * wallLength, 1.0f, targetTile.Y * wallLength);
-
-                        var trigger = new TeleportTrigger
-                        {
-                            Id = id,
-                            Position = sourcePosition,
-                            TargetPosition = targetPosition,
-                            Shader = shader
-                        };
-
-                        if (trigger.TextureID == 0)
-                        {
-                            Console.WriteLine($"[Warning] Teleport '{id}' nemá texturu! Zkontroluj textures/teleport.jpg");
-                        }
-
-                        Console.WriteLine($"[Teleport] ID: {trigger.Id} Pos: {trigger.Position} -> {trigger.TargetPosition}, TextureID: {trigger.TextureID}");
-
-                        Vector2i tile = new Vector2i(sourceTile.X, sourceTile.Y);
-                        triggerMap[tile] = trigger;
-                        renderables.Add(trigger);
-                        Teleports.Add(new Teleport(id, sourcePosition, targetPosition));
-
-                        if (tiles.Count > 2)
-                        {
-                            Console.WriteLine($"Teleport '{id}' has more than 2 positions. Only the first 2 will be used.");
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Teleport '{id}' has less than 2 points.");
-                    }
-                }
+                // Zpracování teleportů
+                ProcessTeleportPositions();
 
                 Console.WriteLine($"[DEBUG] Celkem načteno teleportů: {Teleports.Count}");
                 foreach (var t in Teleports)
@@ -177,6 +126,65 @@ namespace ZPG
             {
                 Console.WriteLine("Failed to read map file:");
                 Console.WriteLine(e.Message);
+            }
+        }
+
+        private void ProcessTeleportPositions()
+        {
+            Console.WriteLine($"[MapReader] Zpracovávám {teleportTilePositions.Count} různých teleportů");
+            
+            foreach (var pair in teleportTilePositions)
+            {
+                var id = pair.Key;
+                var tiles = pair.Value;
+
+                Console.WriteLine($"[MapReader] Teleport '{id}' má {tiles.Count} pozic");
+
+                // Pokud teleport má aspoň 2 pozice, vytvoříme obousměrný teleport
+                if (tiles.Count >= 2)
+                {
+                    // Pro každou pozici vytvoříme teleport na další pozici v kruhu
+                    for (int i = 0; i < tiles.Count; i++)
+                    {
+                        Vector2i sourceTile = tiles[i];
+                        // Target je další pozice v kruhu (nebo první, pokud jsme na konci)
+                        Vector2i targetTile = tiles[(i + 1) % tiles.Count];
+
+                        // Nastavení pozic - umístěno nad podlahu pro lepší viditelnost
+                        Vector3 sourcePosition = new Vector3(sourceTile.X * wallLength, 0.5f, sourceTile.Y * wallLength);
+                        Vector3 targetPosition = new Vector3(targetTile.X * wallLength, 0.5f, targetTile.Y * wallLength);
+
+                        // Vytvoření teleportu s vlastními parametry
+                        var trigger = new TeleportTrigger(1.8f, 1.5f, 1.8f)
+                        {
+                            Id = id,
+                            Shader = shader,
+                            TargetPosition = targetPosition,
+                            DelayBeforeTeleport = 1.0f, // Nastavení delay na 1 sekundu
+                            CooldownAfterTeleport = 2.0f // Nastavení cooldownu na 2 sekundy
+                        };
+                        
+                        // Nastavíme pozici a uložíme základní výšku
+                        trigger.SetBasePosition(sourcePosition);
+                        
+                        // Načtení textury
+                        if (trigger.TextureID == 0)
+                        {
+                            Console.WriteLine($"[Warning] Teleport '{id}' nemá texturu! Zkontroluj textures/teleport.jpg");
+                        }
+
+                        Console.WriteLine($"[Teleport] Vytvořen teleport ID: {trigger.Id}, Pozice: {trigger.Position} -> {trigger.TargetPosition}, TextureID: {trigger.TextureID}");
+
+                        // Přidáme teleport do seznamu a mapy
+                        triggerMap[sourceTile] = trigger;
+                        renderables.Add(trigger);
+                        Teleports.Add(new Teleport(id, sourcePosition, targetPosition));
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"[Error] Teleport '{id}' má méně než 2 body, což je nedostatečné.");
+                }
             }
         }
 

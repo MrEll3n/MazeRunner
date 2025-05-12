@@ -24,9 +24,7 @@ namespace ZPG
         
         public List<Model> TriggerModels { get; set; } = new();
         
-        private TeleportTrigger lastTeleportTrigger;
-        private float teleportCooldown = 0f;
-        private const float TELEPORT_COOLDOWN_TIME = 1.0f;
+        private Vector2i lastTilePosition = new Vector2i(int.MinValue, int.MinValue);
 
         public Player(Vector3 startPosition, Window window)
         {
@@ -52,27 +50,18 @@ namespace ZPG
 
         public void Update(float deltaTime)
         {
-            // Update teleport cooldown
-            if (teleportCooldown > 0)
-            {
-                teleportCooldown -= deltaTime;
-            }
-            
-            // Store input state before it's cleared
+            // Zjistíme kolize s teleporty
+            CheckTriggerCollisions(deltaTime);
+    
             bool hadInput = controller.HasInput;
-
-            // Apply control input
             controller.ApplyInputControl();
 
-            // Apply physics
             Vector3 totalForce = controller.ConsumeForces();
             Acceleration = totalForce / Mass;
             Velocity += Acceleration * deltaTime;
 
-            // Clear movement input (used to apply friction logic properly)
             controller.ClearInput();
 
-            // Apply ground friction only if no input
             if (IsOnGround && !hadInput)
             {
                 Vector3 horizontal = new Vector3(Velocity.X, 0, Velocity.Z);
@@ -80,7 +69,6 @@ namespace ZPG
                 Velocity = new Vector3(horizontal.X, Velocity.Y, horizontal.Z);
             }
 
-            // Apply air drag
             if (!IsOnGround)
             {
                 Vector3 horizontal = new Vector3(Velocity.X, 0, Velocity.Z);
@@ -88,10 +76,8 @@ namespace ZPG
                 Velocity -= new Vector3(drag.X, 0, drag.Z) * deltaTime;
             }
 
-            // Collision movement
             MoveAndSlideMeshBased(Velocity, controller.CurrentWalls, deltaTime);
 
-            // Ground detection
             if (Position.Y <= 0.01f)
             {
                 Position = new Vector3(Position.X, 0.01f, Position.Z);
@@ -102,35 +88,46 @@ namespace ZPG
             {
                 IsOnGround = false;
             }
-            
-            // Collision-based teleport trigger
+
+            Camera.Position = Position + new Vector3(0, CameraHeight, 0);
+
+            // Tile výpočet
+            int tileSize = 2;
+            Vector2i currentTile = new Vector2i((int)(Position.X / tileSize), (int)(Position.Z / tileSize));
+
+            if (currentTile != lastTilePosition)
+            {
+                lastTilePosition = currentTile;
+                Console.WriteLine($"[Player] Tile changed: {currentTile}");
+            }
+        }
+
+
+        // Nová metoda pro kontrolu kolizí s triggery
+        private void CheckTriggerCollisions(float deltaTime)
+        {
+            // Pro každý trigger model zjistíme, zda s ním kolidujeme
             foreach (var model in TriggerModels)
             {
                 if (model is TeleportTrigger trigger)
                 {
-                    // Check for collision and ensure cooldown has elapsed
-                    if (trigger.IsCollidingWithPlayer(this) && 
-                        (lastTeleportTrigger != trigger || teleportCooldown <= 0))
+                    bool currentlyColliding = trigger.IsCollidingWithPlayer(this);
+                    
+                    // Pokud aktuálně kolidujeme, voláme OnPlayerEnter
+                    if (currentlyColliding)
                     {
                         trigger.OnPlayerEnter(this);
-                        
-                        // Reset cooldown and update last teleport
-                        lastTeleportTrigger = trigger;
-                        teleportCooldown = TELEPORT_COOLDOWN_TIME;
-                        break;
                     }
+                    // Jinak voláme OnPlayerExit
+                    else
+                    {
+                        trigger.OnPlayerExit(this);
+                    }
+                    
+                    // Update teleportu (animace, delay, cooldown)
+                    trigger.Update(deltaTime);
                 }
             }
-
-            
-            // Update camera
-            Camera.Position = Position + new Vector3(0, CameraHeight, 0);
-
-            // Debug
-            //Console.WriteLine($"[Update] Velocity: {Velocity} (|v| = {Velocity.Length:F2})");
-            
-            Vector2i tileText = new Vector2i((int)(Position.X / 2), (int)(Position.Z / 2));
-            Console.WriteLine($"Player tile: {tileText}");
         }
 
         public void MoveAndSlideMeshBased(Vector3 desiredVelocity, IEnumerable<Wall> walls, float deltaTime)
@@ -163,8 +160,6 @@ namespace ZPG
                 Vector3 normal = totalCorrection.Normalized();
                 Velocity -= Vector3.Dot(Velocity, normal) * normal;
             }
-
-            //Console.WriteLine($"[MoveAndSlide] Pos: {Position}, Vel: {Velocity}, Speed: {Velocity.Length:F2}");
         }
     }
 }
