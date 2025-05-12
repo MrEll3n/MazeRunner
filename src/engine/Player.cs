@@ -23,6 +23,10 @@ namespace ZPG
         private readonly PlayerController controller;
         
         public List<Model> TriggerModels { get; set; } = new();
+        
+        private TeleportTrigger lastTeleportTrigger;
+        private float teleportCooldown = 0f;
+        private const float TELEPORT_COOLDOWN_TIME = 1.0f;
 
         public Player(Vector3 startPosition, Window window)
         {
@@ -48,6 +52,12 @@ namespace ZPG
 
         public void Update(float deltaTime)
         {
+            // Update teleport cooldown
+            if (teleportCooldown > 0)
+            {
+                teleportCooldown -= deltaTime;
+            }
+            
             // Store input state before it's cleared
             bool hadInput = controller.HasInput;
 
@@ -98,10 +108,15 @@ namespace ZPG
             {
                 if (model is TeleportTrigger trigger)
                 {
-                    float distance = (Position - trigger.Position).Length;
-                    if (distance < 1.0f)
+                    // Check for collision and ensure cooldown has elapsed
+                    if (trigger.IsCollidingWithPlayer(this) && 
+                        (lastTeleportTrigger != trigger || teleportCooldown <= 0))
                     {
                         trigger.OnPlayerEnter(this);
+                        
+                        // Reset cooldown and update last teleport
+                        lastTeleportTrigger = trigger;
+                        teleportCooldown = TELEPORT_COOLDOWN_TIME;
                         break;
                     }
                 }

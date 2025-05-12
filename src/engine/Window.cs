@@ -279,6 +279,9 @@ namespace ZPG
             // Vykresli stěny
             mapReader.GetRenderables().ForEach(model => model.Draw(player.Camera));
 
+            // Vykresli teleporty stejným způsobem
+            mapReader.GetTeleportTriggers().ForEach(trigger => trigger.Draw(player.Camera));
+
             SwapBuffers();
 
             frameCount++;

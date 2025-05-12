@@ -66,6 +66,9 @@ namespace ZPG
                     return;
                 }
 
+                int? startX = null;
+                int? startZ = null;
+
                 for (int z = 0; z < height; z++)
                 {
                     string line = lines[z + 1];
@@ -86,6 +89,8 @@ namespace ZPG
                         else if (IsStartPosition(c))
                         {
                             PlayerStartPosition = position;
+                            startX = x;
+                            startZ = z;
                         }
                         else if (IsLight(c)) { }
                         else if (IsDoor(c)) { }
@@ -104,6 +109,19 @@ namespace ZPG
                     }
                 }
 
+                // Přidání testovacího teleportu '9' vedle hráče, pokud byl nalezen
+                if (startX.HasValue && startZ.HasValue && width > startX + 2)
+                {
+                    Console.WriteLine("[DEBUG] Přidávám testovací teleport '9' vedle hráče");
+
+                    Vector2i tile1 = new Vector2i(startX.Value + 1, startZ.Value);
+                    Vector2i tile2 = new Vector2i(startX.Value + 2, startZ.Value);
+                    teleportTilePositions['9'] = new List<Vector2i> { tile1, tile2 };
+
+                    Console.WriteLine($"Found teleport '9' at tile ({tile1.X}, {tile1.Y})");
+                    Console.WriteLine($"Found teleport '9' at tile ({tile2.X}, {tile2.Y})");
+                }
+
                 foreach (var pair in teleportTilePositions)
                 {
                     var id = pair.Key;
@@ -113,8 +131,10 @@ namespace ZPG
                     {
                         Vector2i sourceTile = tiles[0];
                         Vector2i targetTile = tiles[1];
-                        Vector3 sourcePosition = new Vector3(sourceTile.X * wallLength, 0, sourceTile.Y * wallLength);
-                        Vector3 targetPosition = new Vector3(targetTile.X * wallLength, 0, targetTile.Y * wallLength);
+
+                        // Posuň teleporty do výšky, aby byly vidět
+                        Vector3 sourcePosition = new Vector3(sourceTile.X * wallLength, 1.0f, sourceTile.Y * wallLength);
+                        Vector3 targetPosition = new Vector3(targetTile.X * wallLength, 1.0f, targetTile.Y * wallLength);
 
                         var trigger = new TeleportTrigger
                         {
@@ -124,12 +144,17 @@ namespace ZPG
                             Shader = shader
                         };
 
+                        if (trigger.TextureID == 0)
+                        {
+                            Console.WriteLine($"[Warning] Teleport '{id}' nemá texturu! Zkontroluj textures/teleport.jpg");
+                        }
+
+                        Console.WriteLine($"[Teleport] ID: {trigger.Id} Pos: {trigger.Position} -> {trigger.TargetPosition}, TextureID: {trigger.TextureID}");
+
                         Vector2i tile = new Vector2i(sourceTile.X, sourceTile.Y);
                         triggerMap[tile] = trigger;
                         renderables.Add(trigger);
                         Teleports.Add(new Teleport(id, sourcePosition, targetPosition));
-
-                        Console.WriteLine($"Teleport {id} at {sourcePosition}, target: {targetPosition}");
 
                         if (tiles.Count > 2)
                         {
@@ -140,6 +165,12 @@ namespace ZPG
                     {
                         Console.WriteLine($"Teleport '{id}' has less than 2 points.");
                     }
+                }
+
+                Console.WriteLine($"[DEBUG] Celkem načteno teleportů: {Teleports.Count}");
+                foreach (var t in Teleports)
+                {
+                    Console.WriteLine($"  - {t.Id}: {t.SourcePosition} -> {t.TargetPosition}");
                 }
             }
             catch (Exception e)
