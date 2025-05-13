@@ -148,8 +148,8 @@ namespace ZPG
                         Vector2i targetTile = tiles[(i + 1) % tiles.Count];
 
                         // Nastavení pozic - umístěno nad podlahu pro lepší viditelnost
-                        Vector3 sourcePosition = new Vector3(sourceTile.X * wallLength, 1f, sourceTile.Y * wallLength);
-                        Vector3 targetPosition = new Vector3(targetTile.X * wallLength, 1f, targetTile.Y * wallLength);
+                        Vector3 sourcePosition = new Vector3(sourceTile.X * wallLength, 1.5f, sourceTile.Y * wallLength);
+                        Vector3 targetPosition = new Vector3(targetTile.X * wallLength, 1.5f, targetTile.Y * wallLength);
 
                         // Vytvoření teleportu s vlastními parametry
                         var trigger = new TeleportTrigger()

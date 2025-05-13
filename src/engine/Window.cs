@@ -301,13 +301,9 @@ namespace ZPG
         protected override void OnUpdateFrame(FrameEventArgs args)
         {
             base.OnUpdateFrame(args);
-
             float dt = (float)args.Time;
 
-            //TeleportTrigger.TickGlobalCooldown(dt);
-            
-
-            // === Movement Input ===
+            // === Pohyb ===
             float playerSpeed = 1.4f;
             if (KeyboardState.IsKeyDown(Keys.LeftShift))
                 playerSpeed *= 1.8f;
@@ -321,44 +317,74 @@ namespace ZPG
             if (input.LengthSquared > 0)
             {
                 input = input.Normalized();
-
                 Vector3 camForward = player.Camera.Front;
                 Vector3 flatForward = new Vector3(camForward.X, 0, camForward.Z).Normalized();
                 Vector3 flatRight = Vector3.Cross(Vector3.UnitY, flatForward).Normalized();
-
                 Vector3 moveDir = flatForward * input.Z + flatRight * input.X;
                 Vector3 desiredVelocity = moveDir * playerSpeed;
 
                 player.MoveToward(desiredVelocity);
             }
 
-            // === Jump input ===
+            // === Skok ===
             if (isJumping && player.IsOnGround)
             {
-                player.Jump(5f); // you can tune the jump force
+                player.Jump(5f);
             }
 
-            // === Physics + collision update ===
+            // === Fyzika ===
+            player.Controller.ApplyInputControl();
+            Vector3 totalForce = player.Controller.ConsumeForces();
+            player.Acceleration = totalForce / player.Mass;
+            player.Velocity += player.Acceleration * dt;
+
+            player.Controller.ClearInput();
+
+            if (player.IsOnGround && input.LengthSquared == 0)
+            {
+                Vector3 horizontal = new Vector3(player.Velocity.X, 0, player.Velocity.Z);
+                horizontal -= horizontal * player.Controller.GroundFriction * dt;
+                player.Velocity = new Vector3(horizontal.X, player.Velocity.Y, horizontal.Z);
+            }
+
+            if (!player.IsOnGround)
+            {
+                Vector3 horizontal = new Vector3(player.Velocity.X, 0, player.Velocity.Z);
+                Vector3 drag = horizontal * 2.0f;
+                player.Velocity -= new Vector3(drag.X, 0, drag.Z) * dt;
+            }
+
             player.Controller.CurrentWalls = mapReader.GetWalls();
-            player.Update(dt);
-            
+            player.MoveAndSlideMeshBased(player.Velocity, player.Controller.CurrentWalls, dt);
+
+            // Detekce země
+            if (player.Position.Y <= 0.01f)
+            {
+                player.Position = new Vector3(player.Position.X, 0.01f, player.Position.Z);
+                player.Velocity = new Vector3(player.Velocity.X, 0, player.Velocity.Z);
+                player.IsOnGround = true;
+            }
+            else
+            {
+                player.IsOnGround = false;
+            }
+
+            // === Teleporty ===
             foreach (var trigger in mapReader.GetTeleportTriggers())
             {
                 float dist = (trigger.Position - player.Position).Length;
                 if (dist < player.CollisionRadius)
                 {
                     trigger.OnPlayerEnter(player);
-                    break; // Zabraňuje vícenásobnému přepnutí
+                    break;
                 }
             }
-            
-            player.Update(dt);
-            
-            // Aktualizace animace teleportů
+
             foreach (var trigger in mapReader.GetTeleportTriggers())
-            {
                 trigger.Update(dt);
-            }
+
+            // === Kamera ===
+            player.UpdateCamera();
         }
 
 

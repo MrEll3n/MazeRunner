@@ -47,47 +47,11 @@ namespace ZPG
             }
         }
 
-        public void Update(float deltaTime)
+        public void UpdateCamera()
         {
-            bool hadInput = controller.HasInput;
-            controller.ApplyInputControl();
-
-            Vector3 totalForce = controller.ConsumeForces();
-            Acceleration = totalForce / Mass;
-            Velocity += Acceleration * deltaTime;
-
-            controller.ClearInput();
-
-            if (IsOnGround && !hadInput)
-            {
-                Vector3 horizontal = new Vector3(Velocity.X, 0, Velocity.Z);
-                horizontal -= horizontal * controller.GroundFriction * deltaTime;
-                Velocity = new Vector3(horizontal.X, Velocity.Y, horizontal.Z);
-            }
-
-            if (!IsOnGround)
-            {
-                Vector3 horizontal = new Vector3(Velocity.X, 0, Velocity.Z);
-                Vector3 drag = horizontal * 2.0f;
-                Velocity -= new Vector3(drag.X, 0, drag.Z) * deltaTime;
-            }
-
-            MoveAndSlideMeshBased(Velocity, controller.CurrentWalls, deltaTime);
-
-            if (Position.Y <= 0.01f)
-            {
-                Position  = new Vector3(Position.X, 0.01f, Position.Z);
-                Velocity  = new Vector3(Velocity.X, 0, Velocity.Z);
-                IsOnGround = true;
-            }
-            else
-            {
-                IsOnGround = false;
-            }
-
             Camera.Position = Position + new Vector3(0, CameraHeight, 0);
 
-            // ––– výpis tile souřadnic –––
+            // Výpis pozice hráče na mapě (tile)
             int tileSize = 2;
             Vector2i currentTile = new Vector2i(
                 (int)(Position.X / tileSize),

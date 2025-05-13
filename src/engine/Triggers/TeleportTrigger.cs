@@ -26,6 +26,7 @@ namespace ZPG
 
         private float animationTime  = 0f;   // pro sinusové pohupování
         private float basePosY       = 0f;   // „nulová“ výška portálu
+        private float rotationAngle  = 0f;   // úhel rotace portálu (pro animaci)
 
         private Player currentPlayer = null; // hráč, který právě stojí v portálu
         private float  delayTimer    = 0f;   // odpočítávání před teleportem
@@ -71,6 +72,12 @@ namespace ZPG
                 TextureID = 0;
             }
         }
+        
+        public override Matrix4 GetModelMatrix()
+        {
+            return Matrix4.CreateRotationY(rotationAngle)
+                   * Matrix4.CreateTranslation(Position);
+        }
 
         /* ----------------- MESH generátor (osmistěn) ----------------- */
 
@@ -79,12 +86,13 @@ namespace ZPG
             Vertices.Clear();
             Triangles.Clear();
 
-            float h = size * 0.5f;
-
             // indexy: 0 = horní špička, 1 = dolní špička,
             // 2-5 = střed (N, E, S, W)
-            Vertices.Add(new Vertex(new Vector3( 0,  h, 0), new Vector2(0.5f, 1f))); // 0
-            Vertices.Add(new Vertex(new Vector3( 0, -h, 0), new Vector2(0.5f, 0f))); // 1
+            float h = 1.0f;
+            float stretch = 1.3f; // faktor protažení ve vertikálním směru
+
+            Vertices.Add(new Vertex(new Vector3( 0,  h * stretch, 0), new Vector2(0.5f, 1f))); // 0 – horní špička
+            Vertices.Add(new Vertex(new Vector3( 0, -h * stretch, 0), new Vector2(0.5f, 0f))); // 1 – spodní špička
 
             Vertices.Add(new Vertex(new Vector3( 0, 0, -h), new Vector2(0.5f, .5f))); // 2 N
             Vertices.Add(new Vertex(new Vector3( h, 0,  0), new Vector2(1f,   .5f))); // 3 E
@@ -121,13 +129,26 @@ namespace ZPG
 
         public bool IsColliding(Player plr)
         {
-            Vector2 trgXZ = new(Position.X, Position.Z);
-            Vector2 plyXZ = new(plr.Position.X, plr.Position.Z);
+            float teleportRadius = 1.2f;
+            float teleportHeight = 2.5f;
 
-            float distXZ = (plyXZ - trgXZ).Length;
-            float yDiff  = MathF.Abs(plr.Position.Y - Position.Y);
+            // Hráčovy hranice (nohy až hlava)
+            float playerYMin = plr.Position.Y;
+            float playerYMax = plr.Position.Y + plr.CameraHeight;
 
-            return distXZ <= horizRadius && yDiff <= vertTolerance;
+            // Válcový trigger má střed u basePosY
+            float yBottom = basePosY - teleportHeight / 2f;
+            float yTop = basePosY + teleportHeight / 2f;
+
+            // AABB-Y překrytí?
+            bool yOverlap = playerYMax >= yBottom && playerYMin <= yTop;
+
+            // Vzdálenost v XZ rovině
+            Vector2 playerXZ = new(plr.Position.X, plr.Position.Z);
+            Vector2 triggerXZ = new(Position.X, Position.Z);
+            float distXZ = (playerXZ - triggerXZ).Length;
+
+            return yOverlap && distXZ <= teleportRadius;
         }
 
         /* ----------------- reakce na vstup/odchod ----------------- */
@@ -163,6 +184,9 @@ namespace ZPG
             Position = new Vector3(Position.X,
                                    basePosY + 0.1f * MathF.Sin(animationTime * 2f),
                                    Position.Z);
+            
+            rotationAngle += dt * .5f; // 1.0f = rychlost otáčení (radiány za sekundu)
+            if (rotationAngle > MathF.Tau) rotationAngle -= MathF.Tau;
 
             TickGlobalCooldown(dt);
 
