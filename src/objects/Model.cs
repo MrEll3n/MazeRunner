@@ -3,8 +3,6 @@ using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
-using System.Runtime.InteropServices;
 
 namespace ZPG
 {
@@ -13,46 +11,20 @@ namespace ZPG
     /// </summary>
     public abstract class Model : IDisposable
     {
-        /// <summary>
-        /// Shader, který se použije při vykreslení modelu.
-        /// </summary>
         public Shader Shader;
-
-        /// <summary>
-        /// Pozice modelu ve světovém prostoru.
-        /// </summary>
         public Vector3 Position = new Vector3(0, 0, 0);
-
-        /// <summary>
-        /// ID textury aplikované na model.
-        /// </summary>
         public int TextureID { get; set; } = -1;
 
-        /// <summary>
-        /// Vrcholy modelu (pozice, normála, tex. souřadnice).
-        /// </summary>
         public BindingList<Vertex> Vertices { get; set; } = new();
-
-        /// <summary>
-        /// Trojúhelníky tvořící povrch modelu (indexy do pole vrcholů).
-        /// </summary>
         public BindingList<Triangle> Triangles { get; set; } = new();
 
-        // OpenGL buffery
-        int vbo;        // Vertex Buffer Object
-        int ebo;        // Element Buffer Object
-        int vao;        // Vertex Array Object
+        int vbo, ebo, vao;
 
-        /// <summary>
-        /// Inicializuje GPU buffery (VBO, EBO, VAO) a připraví data pro vykreslení.
-        /// </summary>
         public void Construct()
         {
-            // VAO – uchovává vazby atributů a bufferů
             vao = GL.GenVertexArray();
             GL.BindVertexArray(vao);
 
-            // VBO – naplnění vrcholových dat
             vbo = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
 
@@ -62,7 +34,6 @@ namespace ZPG
 
             GL.BufferData(BufferTarget.ArrayBuffer, vboData.Count * sizeof(float), vboData.ToArray(), BufferUsageHint.StaticDraw);
 
-            // EBO – indexy trojúhelníků
             ebo = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
 
@@ -76,27 +47,20 @@ namespace ZPG
 
             GL.BufferData(BufferTarget.ElementArrayBuffer, eboData.Count * sizeof(int), eboData.ToArray(), BufferUsageHint.StaticDraw);
 
-            int stride = VertexGL.SizeOf(); // velikost jednoho vrcholu v bajtech
+            int stride = VertexGL.SizeOf();
 
-            // Atributy vrcholu:
-            // Pozice (vec3) → location 0
             GL.EnableVertexAttribArray(0);
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, stride, 0);
 
-            // TexCoord (vec2) → location 1
             GL.EnableVertexAttribArray(1);
             GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, stride, 3 * sizeof(float));
 
-            // Normála (vec3) → location 2
             GL.EnableVertexAttribArray(2);
             GL.VertexAttribPointer(2, 3, VertexAttribPointerType.Float, false, stride, 5 * sizeof(float));
 
-            GL.BindVertexArray(0); // odpojení VAO
+            GL.BindVertexArray(0);
         }
 
-        /// <summary>
-        /// Automatický výpočet normál z trojúhelníků pro nasvícení.
-        /// </summary>
         protected void ComputeNormals(IList<Vertex> vertices, IList<Triangle> triangles)
         {
             foreach (var v in vertices)
@@ -123,12 +87,19 @@ namespace ZPG
         }
 
         /// <summary>
+        /// Vrací transformační matici modelu. Lze přepsat v potomcích.
+        /// </summary>
+        public virtual Matrix4 GetModelMatrix()
+        {
+            return Matrix4.CreateTranslation(Position);
+        }
+
+        /// <summary>
         /// Vykreslí model pomocí aktuálního shaderu a kamery.
         /// </summary>
-        /// <param name="camera">Aktuální kamera pro nastavení view/projection matic.</param>
         public void Draw(Camera camera)
         {
-            Matrix4 modelMatrix = Matrix4.CreateTranslation(Position);
+            Matrix4 modelMatrix = GetModelMatrix();
 
             Shader.Use();
             Shader.SetUniform("projection", camera.Projection);
@@ -139,7 +110,7 @@ namespace ZPG
             {
                 GL.ActiveTexture(TextureUnit.Texture0);
                 GL.BindTexture(TextureTarget.Texture2D, TextureID);
-                Shader.SetUniform("uTexture", 0); // sampler2D uniform
+                Shader.SetUniform("uTexture", 0);
             }
 
             GL.BindVertexArray(vao);
@@ -151,9 +122,6 @@ namespace ZPG
 
         private bool disposed = false;
 
-        /// <summary>
-        /// Uvolní OpenGL buffery při zničení objektu.
-        /// </summary>
         public void Dispose()
         {
             Dispose(true);
@@ -164,7 +132,6 @@ namespace ZPG
         {
             if (!disposed)
             {
-                // uvolnění nativních zdrojů (OpenGL objekty)
                 GL.DeleteBuffer(vbo);
                 GL.DeleteBuffer(ebo);
                 GL.DeleteVertexArray(vao);
@@ -177,4 +144,3 @@ namespace ZPG
         #endregion
     }
 }
-

@@ -21,17 +21,29 @@ namespace ZPG
 
         private readonly PlayerController controller;
 
+        public List<Model> TriggerModels { get; set; } = new();
+
+        private Vector2i lastTilePosition = new(int.MinValue, int.MinValue);
+
         public Player(Vector3 startPosition, Window window)
         {
             Position = startPosition;
-            Camera = new Camera(Position + new Vector3(0, CameraHeight, 0)) { Window = window };
+
+            // ✅ přiřazení kamery s odkazem na okno kvůli fade efektu
+            Camera = new Camera(Position + new Vector3(0, CameraHeight, 0))
+            {
+                Window = window
+            };
+
             Flashlight = new Flashlight(this);
             controller = new PlayerController(this);
         }
 
-        public void AddForce(Vector3 force) => controller.AddForce(force);
-        public void MoveToward(Vector3 targetVelocity) => controller.MoveToward(targetVelocity);
         public PlayerController Controller => controller;
+
+        public void AddForce(Vector3 force) => controller.AddForce(force);
+
+        public void MoveToward(Vector3 targetVelocity) => controller.MoveToward(targetVelocity);
 
         public void Jump(float velocityY)
         {
@@ -43,60 +55,12 @@ namespace ZPG
             }
         }
 
-        public void Update(float deltaTime)
+        public void UpdateCamera()
         {
-            // Store input state before it's cleared
-            bool hadInput = controller.HasInput;
-
-            // Apply control input
-            controller.ApplyInputControl();
-
-            // Apply physics
-            Vector3 totalForce = controller.ConsumeForces();
-            Acceleration = totalForce / Mass;
-            Velocity += Acceleration * deltaTime;
-
-            // Clear movement input (used to apply friction logic properly)
-            controller.ClearInput();
-
-            // Apply ground friction only if no input
-            if (IsOnGround && !hadInput)
-            {
-                Vector3 horizontal = new Vector3(Velocity.X, 0, Velocity.Z);
-                horizontal -= horizontal * controller.GroundFriction * deltaTime;
-                Velocity = new Vector3(horizontal.X, Velocity.Y, horizontal.Z);
-            }
-
-            // Apply air drag
-            if (!IsOnGround)
-            {
-                Vector3 horizontal = new Vector3(Velocity.X, 0, Velocity.Z);
-                Vector3 drag = horizontal * 2.0f;
-                Velocity -= new Vector3(drag.X, 0, drag.Z) * deltaTime;
-            }
-
-            // Collision movement
-            MoveAndSlideMeshBased(Velocity, controller.CurrentWalls, deltaTime);
-
-            // Ground detection
-            if (Position.Y <= 0.01f)
-            {
-                Position = new Vector3(Position.X, 0.01f, Position.Z);
-                Velocity = new Vector3(Velocity.X, 0, Velocity.Z);
-                IsOnGround = true;
-            }
-            else
-            {
-                IsOnGround = false;
-            }
-
-            // Update camera
             Camera.Position = Position + new Vector3(0, CameraHeight, 0);
-
-            // Debug
-            Console.WriteLine($"[Update] Velocity: {Velocity} (|v| = {Velocity.Length:F2})");
         }
 
+        // === fyzika + kolize ===
         public void MoveAndSlideMeshBased(Vector3 desiredVelocity, IEnumerable<Wall> walls, float deltaTime)
         {
             float radius = 0.3f;
@@ -113,9 +77,7 @@ namespace ZPG
                     Vector3 c = wall.Vertices[tri.I3].Position + wall.Position;
 
                     if (MeshCollisionHelper.SphereIntersectsTriangle(newPos, radius, a, b, c, out Vector3 pushOut))
-                    {
                         totalCorrection += pushOut;
-                    }
                 }
             }
 
@@ -127,8 +89,6 @@ namespace ZPG
                 Vector3 normal = totalCorrection.Normalized();
                 Velocity -= Vector3.Dot(Velocity, normal) * normal;
             }
-
-            Console.WriteLine($"[MoveAndSlide] Pos: {Position}, Vel: {Velocity}, Speed: {Velocity.Length:F2}");
         }
     }
 }
