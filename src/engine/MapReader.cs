@@ -110,9 +110,6 @@ namespace ZPG
                     }
                 }
 
-                // Kód pro přidání testovacího teleportu '9' byl odstraněn
-                // Testovací teleporty se nyní vytváří pouze z mapy
-
                 // Zpracování teleportů
                 ProcessTeleportPositions();
 
@@ -151,11 +148,11 @@ namespace ZPG
                         Vector2i targetTile = tiles[(i + 1) % tiles.Count];
 
                         // Nastavení pozic - umístěno nad podlahu pro lepší viditelnost
-                        Vector3 sourcePosition = new Vector3(sourceTile.X * wallLength, 0.5f, sourceTile.Y * wallLength);
-                        Vector3 targetPosition = new Vector3(targetTile.X * wallLength, 0.5f, targetTile.Y * wallLength);
+                        Vector3 sourcePosition = new Vector3(sourceTile.X * wallLength, 1f, sourceTile.Y * wallLength);
+                        Vector3 targetPosition = new Vector3(targetTile.X * wallLength, 1f, targetTile.Y * wallLength);
 
                         // Vytvoření teleportu s vlastními parametry
-                        var trigger = new TeleportTrigger(1.8f, 1.5f, 1.8f)
+                        var trigger = new TeleportTrigger()
                         {
                             Id = id,
                             Shader = shader,

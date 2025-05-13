@@ -304,6 +304,9 @@ namespace ZPG
 
             float dt = (float)args.Time;
 
+            //TeleportTrigger.TickGlobalCooldown(dt);
+            
+
             // === Movement Input ===
             float playerSpeed = 1.4f;
             if (KeyboardState.IsKeyDown(Keys.LeftShift))
@@ -349,6 +352,7 @@ namespace ZPG
                 }
             }
             
+            player.Update(dt);
             
             // Aktualizace animace teleportů
             foreach (var trigger in mapReader.GetTeleportTriggers())
