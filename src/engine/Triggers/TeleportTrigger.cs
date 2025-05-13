@@ -45,6 +45,8 @@ namespace ZPG
 
         private float horizRadius;   // poloměr pro X-Z kolizi
         private float vertTolerance; // povolená odchylka ve výšce
+        
+        public FadeOverlay FadeOverlay { get; set; }
 
         private void RecomputeCollisionBounds()
         {
@@ -129,7 +131,7 @@ namespace ZPG
 
         public bool IsColliding(Player plr)
         {
-            Console.WriteLine($"[DEBUG] playerY: {plr.Position.Y:F2} .. {plr.Position.Y + plr.CameraHeight:F2}, basePosY: {basePosY:F2}, posY: {Position.Y:F2}");
+            //Console.WriteLine($"[DEBUG] playerY: {plr.Position.Y:F2} .. {plr.Position.Y + plr.CameraHeight:F2}, basePosY: {basePosY:F2}, posY: {Position.Y:F2}");
             float teleportRadius = 1.2f;
             float teleportHeight = 2.5f;
 
@@ -158,11 +160,11 @@ namespace ZPG
         {
             if (IsGlobalCooldown() || cooldownTimer > 0f) return;
 
-            // nechceme resetovat delay, pokud už hráč stojí uvnitř
             if (currentPlayer == null)
             {
+                Console.WriteLine($"[DEBUG] OnPlayerEnter: hráč vstoupil do teleportu {Id}.");
                 currentPlayer = plr;
-                delayTimer    = 0f;
+                delayTimer = 0f;
             }
         }
 
@@ -211,20 +213,33 @@ namespace ZPG
 
         private void ExecuteTeleport()
         {
-            if (currentPlayer == null) return;
+            if (currentPlayer == null || FadeOverlay == null || FadeOverlay.IsActive)
+                return;
+            
+            if (currentPlayer == null || FadeOverlay == null)
+            {
+                Console.WriteLine("[TeleportTrigger] Teleport aborted – no player or overlay.");
+                return;
+            }
 
-            isTeleporting           = true;
-            currentPlayer.Position  = TargetPosition + new Vector3(0, -1f, 0);
-            currentPlayer.Velocity  = Vector3.Zero;
+            Console.WriteLine("[TeleportTrigger] Starting teleport fade...");
+            isTeleporting = true;
 
-            cooldownTimer = CooldownAfterTeleport;
-            SetGlobalCooldown(CooldownAfterTeleport);
+            FadeOverlay.StartFade(() =>
+            {
+                Console.WriteLine("[TeleportTrigger] Teleporting player.");
+                currentPlayer.Position = TargetPosition + new Vector3(0, -1f, 0);
+                currentPlayer.Velocity = Vector3.Zero;
 
-            // reset lokálních stavů
-            currentPlayer  = null;
-            delayTimer     = 0f;
-            isTeleporting  = false;
+                cooldownTimer = CooldownAfterTeleport;
+                SetGlobalCooldown(CooldownAfterTeleport);
+
+                currentPlayer = null;
+                delayTimer = 0f;
+                isTeleporting = false;
+            });
         }
+
 
         /* ----------------- globální cooldown ----------------- */
 

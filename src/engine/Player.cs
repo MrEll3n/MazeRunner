@@ -23,19 +23,27 @@ namespace ZPG
 
         public List<Model> TriggerModels { get; set; } = new();
 
-        private Vector2i lastTilePosition = new Vector2i(int.MinValue, int.MinValue);
+        private Vector2i lastTilePosition = new(int.MinValue, int.MinValue);
 
         public Player(Vector3 startPosition, Window window)
         {
             Position = startPosition;
-            Camera  = new Camera(Position + new Vector3(0, CameraHeight, 0)) { Window = window };
+
+            // ✅ přiřazení kamery s odkazem na okno kvůli fade efektu
+            Camera = new Camera(Position + new Vector3(0, CameraHeight, 0))
+            {
+                Window = window
+            };
+
             Flashlight = new Flashlight(this);
             controller = new PlayerController(this);
         }
 
-        public void AddForce(Vector3 force)           => controller.AddForce(force);
+        public PlayerController Controller => controller;
+
+        public void AddForce(Vector3 force) => controller.AddForce(force);
+
         public void MoveToward(Vector3 targetVelocity) => controller.MoveToward(targetVelocity);
-        public PlayerController Controller             => controller;
 
         public void Jump(float velocityY)
         {
@@ -50,45 +58,10 @@ namespace ZPG
         public void UpdateCamera()
         {
             Camera.Position = Position + new Vector3(0, CameraHeight, 0);
-
-            // Výpis pozice hráče na mapě (tile)
-            int tileSize = 2;
-            Vector2i currentTile = new Vector2i(
-                (int)(Position.X / tileSize),
-                (int)(Position.Z / tileSize));
-
-            if (currentTile != lastTilePosition)
-            {
-                lastTilePosition = currentTile;
-                Console.WriteLine($"[Player] Tile changed: {currentTile}");
-            }
-        }
-        
-        private void CheckTriggerCollisions(float deltaTime)
-        {
-            foreach (var model in TriggerModels)
-            {
-                if (model is TeleportTrigger trigger)
-                {
-                    // ↓↓↓ zde se volá nová veřejná metoda z TeleportTriggeru
-                    bool currentlyColliding = trigger.IsColliding(this);
-
-                    if (currentlyColliding)
-                        trigger.OnPlayerEnter(this);
-                    else
-                        trigger.OnPlayerExit(this);
-
-                    // Portál musí stejně dostat update (animace, cooldown…)
-                    trigger.Update(deltaTime);
-                }
-            }
         }
 
-        // === pohyb + kolize se stěnami ========================================
-        public void MoveAndSlideMeshBased(
-            Vector3 desiredVelocity,
-            IEnumerable<Wall> walls,
-            float deltaTime)
+        // === fyzika + kolize ===
+        public void MoveAndSlideMeshBased(Vector3 desiredVelocity, IEnumerable<Wall> walls, float deltaTime)
         {
             float radius = 0.3f;
             Vector3 move = desiredVelocity * deltaTime;

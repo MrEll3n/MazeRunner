@@ -29,7 +29,7 @@ namespace ZPG
         /// <summary>
         /// Odkaz na okno pro výpočet poměru stran při tvorbě projekční matice.
         /// </summary>
-        public Window Window;
+        public Window Window { get; set; }
 
         /// <summary>
         /// Inicializuje kameru s danou počáteční pozicí.

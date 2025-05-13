@@ -3,290 +3,111 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using System;
+using System.IO;
+using System.Linq;
 
 namespace ZPG
 {
-    /// <summary>
-    /// Hlavní okno hry – zajišťuje celý životní cyklus hry, vykreslování a vstupy.
-    /// </summary>
     public class Window : GameWindow
     {
-        /// <summary>Načítání mapy ze souboru a převod znaků na objekty.</summary>
         public MapReader mapReader;
-
-        /// <summary>Viewport určuje oblast vykreslování a poměr stran.</summary>
         public Viewport viewport;
-
-        /// <summary>Projekční matice kamery (perspektiva).</summary>
         public Matrix4 projection = new Matrix4();
-
-        /// <summary>View matice – pozice a rotace kamery ve scéně.</summary>
         public Matrix4 view = new Matrix4();
 
-        /// <summary>Instance hráče – pozice, kamera, pohyb, kolize.</summary>
         private Player player;
-
-        /// <summary>Šířka okna (používá se pro přepočet viewportu).</summary>
         public int Width { get; private set; } = 800;
-
-        /// <summary>Výška okna.</summary>
         public int Height { get; private set; } = 600;
-
-        /// <summary>Přepínač zachycení myši (pro FPS ovládání).</summary>
         private bool _mouseGrabbed = true;
-
-        /// <summary>Měřítko viewportu (např. Retina displeje na Macu).</summary>
         private float vpScale = 1.0f;
-
-        /// <summary>Indikace, že hráč právě drží mezerník (skok).</summary>
         private bool isJumping = false;
-
-        /// <summary>Počítadlo snímků za sekundu.</summary>
         private int frameCount = 0;
-
-        /// <summary>Časová akumulace pro výpočet FPS.</summary>
         private double fpsTimer = 0;
 
-        /// <summary>ID textur použitých ve světě (stěna, podlaha, strop).</summary>
         private int wallTexture, floorTexture, ceilingTexture;
-
-        /// <summary>Předané argumenty při spuštění (např. --fullscreen).</summary>
+        private Shader basicShader;
+        private Shader fadeShader;
+        private FadeOverlay teleportFadeOverlay;
         private string[] _args { get; set; }
 
-        /// <summary>
-        /// Vytvoření hlavního okna s defaultním nastavením a zpracováním argumentů.
-        /// </summary>
         public Window(string[] args) : base(GameWindowSettings.Default, NativeWindowSettings.Default)
         {
-            CursorState = CursorState.Grabbed;
             _args = args;
         }
 
-        /// <summary>Zpracování klávesových vstupů (přepnutí fullscreen, myši, skok).</summary>
-        protected override void OnKeyDown(KeyboardKeyEventArgs e)
-        {
-            base.OnKeyDown(e);
-
-            if (e.Alt)
-            {
-                switch (e.Key)
-                {
-                    case Keys.Q:
-                        Close();
-                        break;
-                    case Keys.Enter:
-                        if (WindowState == WindowState.Fullscreen)
-                        {
-                            SetWindowedMode();
-                        }
-                        else
-                        {
-                            SetFullscreenMode();
-                        }
-                        break;
-                }
-            }
-
-            if (e.Key == Keys.Escape)
-            {
-                CursorState = _mouseGrabbed ? CursorState.Normal : CursorState.Grabbed;
-                _mouseGrabbed = !_mouseGrabbed;
-            }
-
-            if (e.Key == Keys.Space)
-            {
-                isJumping = true;
-            }
-        }
-
-        /// <summary>Zpracování uvolnění klávesy (např. konec skoku).</summary>
-        protected override void OnKeyUp(KeyboardKeyEventArgs e)
-        {
-            base.OnKeyUp(e);
-
-            if (e.Key == Keys.Space)
-            {
-                isJumping = false;
-            }
-        }
-
-        /// <summary>
-        /// Inicializace OpenGL, načtení shaderů, mapy, textur a vytvoření objektů.
-        /// </summary>
         protected override void OnLoad()
         {
             base.OnLoad();
-
             GL.LoadBindings(new GLFWBindingsContext());
 
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.CullFace);
-            GL.Enable(EnableCap.Texture2D);
-            GL.CullFace(TriangleFace.Back);
+            GL.CullFace(CullFaceMode.Back);
             GL.FrontFace(FrontFaceDirection.Ccw);
 
             for (int i = 0; i < _args.Length; ++i)
             {
                 if (_args[i] == "--fullscreen")
-                {
                     SetFullscreenMode();
-                    CursorState = CursorState.Grabbed;
-                }
-
-                if (_args[i] == "--mac") { vpScale = 2.0f; }
+                if (_args[i] == "--mac")
+                    vpScale = 2.0f;
             }
 
-            viewport = new Viewport()
-            {
-                Top = 0,
-                Left = 0,
-                Width = 1 * vpScale,
-                Height = 1 * vpScale,
-                Window = this
-            };
+            viewport = new Viewport() { Top = 0, Left = 0, Width = 1 * vpScale, Height = 1 * vpScale, Window = this };
 
-            // Shader
-            Shader shader = new Shader("shaders/basic.vert", "shaders/basic.frag");
-            
-            // Načtení všech textur pohromadě
-            this.wallTexture = TextureLoader.LoadTexture("textures/wall.png");
-            this.floorTexture = TextureLoader.LoadTexture("textures/carpet.jpg");
-            this.ceilingTexture = TextureLoader.LoadTexture("textures/ceiling.png");
-            
-            // Přidejte speciální texturu pro teleporty
+            basicShader = new Shader("shaders/basic.vert", "shaders/basic.frag");
+            fadeShader = new Shader("shaders/fade.vert", "shaders/fade.frag");
+            teleportFadeOverlay = new FadeOverlay { Shader = fadeShader };
+
+            wallTexture = TextureLoader.LoadTexture("textures/wall.png");
+            floorTexture = TextureLoader.LoadTexture("textures/carpet.jpg");
+            ceilingTexture = TextureLoader.LoadTexture("textures/ceiling.png");
             int teleportTextureID = TextureLoader.LoadTexture("textures/teleport.jpg");
-            
-            // Pokud textury/teleport.png neexistuje, použijeme jinou texturu
-            if (teleportTextureID == 0)
-            {
-                Console.WriteLine("Teleport texture not found, using wall texture instead");
-                teleportTextureID = wallTexture;
-            }
-            else
-            {
-                Console.WriteLine($"Loaded teleport texture with ID: {teleportTextureID}");
-            }
+            if (teleportTextureID == 0) teleportTextureID = wallTexture;
 
-            // Načti mapu
-            mapReader = new MapReader(shader);
+            mapReader = new MapReader(basicShader);
             mapReader.ReadFile("map.txt");
 
-            if (mapReader.GetWalls().Count == 0)
-            {
-                Console.WriteLine("No walls found in map, creating test wall");
-                Wall testWall = new Wall()
-                {
-                    Shader = shader,
-                    Position = new Vector3(0, 0, -5), // 5 units in front of camera
-                    TextureID = wallTexture
-                };
-                mapReader.GetWalls().Add(testWall);
-            }
-
-            // Nastavení textur pro stěny
             foreach (var wall in mapReader.GetWalls())
             {
-                wall.Shader = shader;
+                wall.Shader = basicShader;
                 wall.TextureID = wallTexture;
             }
 
-            // Nastavení textur a vlastností pro teleporty
             foreach (var trigger in mapReader.GetTeleportTriggers())
             {
-                trigger.Shader = shader; // nebo vlastní shader pro teleporty, pokud máte
+                trigger.Shader = basicShader;
                 trigger.TextureID = teleportTextureID;
-                
-                // Vypiš informace o teleportu pro debugování
-                Console.WriteLine($"Teleport {trigger.Id} at {trigger.Position}, target: {trigger.TargetPosition}, texture: {trigger.TextureID}");
+                trigger.FadeOverlay = teleportFadeOverlay;
             }
 
-            // Vytvoření podlahy a stropu
-            Quad floor = new Quad(128, 128, 0f, true)
-            {
-                Shader = shader,
-                TextureID = floorTexture
-            };
+            mapReader.GetRenderables().Add(new Quad(128, 128, 0f, true) { Shader = basicShader, TextureID = floorTexture });
+            mapReader.GetRenderables().Add(new Quad(128, 128, 3f, false) { Shader = basicShader, TextureID = ceilingTexture });
 
-            Quad ceiling = new Quad(128, 128, 3f, false)
-            {
-                Shader = shader,
-                TextureID = ceilingTexture
-            };
-
-            mapReader.GetRenderables().Add(floor);
-            mapReader.GetRenderables().Add(ceiling);
-
-            // Hráč
-            Vector3 startPosition = mapReader.GetPlayerStartPosition();
-            player = new Player(startPosition, this);
-            
-            // Propojení hráče s teleporty
+            player = new Player(mapReader.GetPlayerStartPosition(), this);
             player.TriggerModels = mapReader.GetTeleportTriggers().Cast<Model>().ToList();
 
-            // Výpis užitečných informací pro debugování
-            Console.WriteLine($"Wall texture path exists: {File.Exists("textures/wall.png")}");
-            Console.WriteLine($"Teleport texture path exists: {File.Exists("textures/teleport.png")}");
-            Console.WriteLine($"Map file exists: {File.Exists("map.txt")}");
-            Console.WriteLine($"Loaded {mapReader.GetWalls().Count} walls from map");
-            Console.WriteLine($"Loaded {mapReader.GetTeleportTriggers().Count} teleports from map");
-
-            // Nastavení shaderu
-            shader.Use();
-            shader.SetUniform("model", Matrix4.Identity);
-            shader.SetUniform("view", Matrix4.Identity);
-            shader.SetUniform("projection", Matrix4.Identity);
-            shader.SetUniform("lightPos", player.Position);
-            shader.SetUniform("lightDir", player.Camera.Front);
-            shader.SetUniform("cutOff", MathF.Cos(MathHelper.DegreesToRadians(20f)));
-            shader.SetUniform("outerCutOff", MathF.Cos(MathHelper.DegreesToRadians(35f)));
-            shader.SetUniform("viewPos", player.Camera.Position);
+            CursorState = CursorState.Grabbed;
         }
 
-        /// <summary>Změna směru pohledu hráče podle pohybu myši.</summary>
-        protected override void OnMouseMove(MouseMoveEventArgs e)
-        {
-            base.OnMouseMove(e);
-
-            if (!_mouseGrabbed) return;
-
-            player.Camera.RotateX(-e.DeltaY / 250f);
-            player.Camera.RotateY(-e.DeltaX / 250f);
-        }
-
-        /// <summary>Změna FOV hráče pomocí kolečka myši.</summary>
-        protected override void OnMouseWheel(MouseWheelEventArgs e)
-        {
-            base.OnMouseWheel(e);
-
-            player.Camera.ChangeFOV(e.OffsetY < 0 ? +1.0f : -1.0f);
-        }
-
-        /// <summary>
-        /// Hlavní vykreslovací smyčka – aplikuje světlo, vykreslí všechny modely a počítá FPS.
-        /// </summary>
         protected override void OnRenderFrame(FrameEventArgs args)
         {
             base.OnRenderFrame(args);
-
             viewport.Set();
             viewport.Clear();
 
-            var shader = mapReader.GetWalls().First().Shader;
+            basicShader.Use();
+            player.Flashlight.Apply(basicShader);
+            mapReader.GetRenderables().ForEach(m => m.Draw(player.Camera));
+            mapReader.GetTeleportTriggers().ForEach(t => t.Draw(player.Camera));
 
-            // Reflektor hráče (svítilna)
-            player.Flashlight.Apply(shader);
-
-            // Vykresli stěny
-            mapReader.GetRenderables().ForEach(model => model.Draw(player.Camera));
-
-            // Vykresli teleporty stejným způsobem
-            mapReader.GetTeleportTriggers().ForEach(trigger => trigger.Draw(player.Camera));
+            fadeShader.Use();
+            teleportFadeOverlay.DrawFullScreenQuad(Width, Height);
 
             SwapBuffers();
-
             frameCount++;
             fpsTimer += args.Time;
-
             if (fpsTimer >= 1.0)
             {
                 Title = $"MazeRunner - FPS: {frameCount}";
@@ -295,18 +116,13 @@ namespace ZPG
             }
         }
 
-        /// <summary>
-        /// Aktualizace logiky hry – pohyb hráče, zpracování vstupů, skákání.
-        /// </summary>
         protected override void OnUpdateFrame(FrameEventArgs args)
         {
             base.OnUpdateFrame(args);
             float dt = (float)args.Time;
 
-            // === Pohyb ===
             float playerSpeed = 1.4f;
-            if (KeyboardState.IsKeyDown(Keys.LeftShift))
-                playerSpeed *= 1.8f;
+            if (KeyboardState.IsKeyDown(Keys.LeftShift)) playerSpeed *= 1.8f;
 
             Vector3 input = Vector3.Zero;
             if (KeyboardState.IsKeyDown(Keys.W)) input.Z += 1;
@@ -322,77 +138,60 @@ namespace ZPG
                 Vector3 flatRight = Vector3.Cross(Vector3.UnitY, flatForward).Normalized();
                 Vector3 moveDir = flatForward * input.Z + flatRight * input.X;
                 Vector3 desiredVelocity = moveDir * playerSpeed;
-
                 player.MoveToward(desiredVelocity);
             }
 
-            // === Skok ===
-            if (isJumping && player.IsOnGround)
-            {
-                player.Jump(5f);
-            }
+            if (isJumping && player.IsOnGround) player.Jump(5f);
 
-            // === Fyzika ===
             player.Controller.ApplyInputControl();
             Vector3 totalForce = player.Controller.ConsumeForces();
             player.Acceleration = totalForce / player.Mass;
             player.Velocity += player.Acceleration * dt;
-
             player.Controller.ClearInput();
 
             if (player.IsOnGround && input.LengthSquared == 0)
             {
-                Vector3 horizontal = new Vector3(player.Velocity.X, 0, player.Velocity.Z);
-                horizontal -= horizontal * player.Controller.GroundFriction * dt;
-                player.Velocity = new Vector3(horizontal.X, player.Velocity.Y, horizontal.Z);
+                Vector3 h = new(player.Velocity.X, 0, player.Velocity.Z);
+                h -= h * player.Controller.GroundFriction * dt;
+                player.Velocity = new Vector3(h.X, player.Velocity.Y, h.Z);
             }
 
             if (!player.IsOnGround)
             {
-                Vector3 horizontal = new Vector3(player.Velocity.X, 0, player.Velocity.Z);
-                Vector3 drag = horizontal * 2.0f;
+                Vector3 h = new(player.Velocity.X, 0, player.Velocity.Z);
+                Vector3 drag = h * 2.0f;
                 player.Velocity -= new Vector3(drag.X, 0, drag.Z) * dt;
             }
 
             player.Controller.CurrentWalls = mapReader.GetWalls();
             player.MoveAndSlideMeshBased(player.Velocity, player.Controller.CurrentWalls, dt);
-
-            // Detekce země
-            if (player.Position.Y <= 0.01f)
+            player.IsOnGround = player.Position.Y <= 0.01f;
+            if (player.IsOnGround)
             {
                 player.Position = new Vector3(player.Position.X, 0.01f, player.Position.Z);
                 player.Velocity = new Vector3(player.Velocity.X, 0, player.Velocity.Z);
-                player.IsOnGround = true;
-            }
-            else
-            {
-                player.IsOnGround = false;
             }
 
-            // === Teleporty ===
             foreach (var trigger in mapReader.GetTeleportTriggers())
             {
-                if (trigger.IsColliding(player))
-                {
-                    trigger.OnPlayerEnter(player);
-                    break;
-                }
-                else
-                {
-                    trigger.OnPlayerExit(player);
-                }
+                if (trigger.IsColliding(player)) trigger.OnPlayerEnter(player);
+                else trigger.OnPlayerExit(player);
             }
-
-
-            foreach (var trigger in mapReader.GetTeleportTriggers())
-                trigger.Update(dt);
-
-            // === Kamera ===
+            foreach (var trigger in mapReader.GetTeleportTriggers()) trigger.Update(dt);
             player.UpdateCamera();
+            teleportFadeOverlay.Update(dt);
         }
 
+        protected override void OnMouseMove(MouseMoveEventArgs e)
+        {
+            base.OnMouseMove(e);
+            //Console.WriteLine($"Mouse delta: {e.Delta}");
+            player.Camera.RotateY(-e.Delta.X * 0.002f);
+            player.Camera.RotateX(-e.Delta.Y * 0.002f);
+        }
 
-        /// <summary>Aktualizace velikosti okna (viewport, poměr stran).</summary>
+        public void StartTeleportFade(Action onFadeComplete) => teleportFadeOverlay.StartFade(onFadeComplete);
+
         protected override void OnResize(ResizeEventArgs e)
         {
             base.OnResize(e);
@@ -400,46 +199,44 @@ namespace ZPG
             Height = e.Height;
         }
 
-        /// <summary>Uvolnění prostředků při ukončení aplikace.</summary>
-        protected override void OnUnload()
+        protected override void OnKeyDown(KeyboardKeyEventArgs e)
         {
-            base.OnUnload();
+            base.OnKeyDown(e);
+            //Console.WriteLine($"Key pressed: {e.Key}");
+
+            if (e.Alt && e.Key == Keys.Enter)
+            {
+                if (WindowState == WindowState.Fullscreen) SetWindowedMode();
+                else SetFullscreenMode();
+            }
+            if (e.Alt && e.Key == Keys.Q)
+            {
+                Close();
+            }
+            if (e.Key == Keys.Escape)
+            {
+                CursorState = _mouseGrabbed ? CursorState.Normal : CursorState.Grabbed;
+                _mouseGrabbed = !_mouseGrabbed;
+            }
+            if (e.Key == Keys.Space) isJumping = true;
         }
 
-        /// <summary>Nastaví okno do režimu fullscreen a upraví viewport pro macOS.</summary>
+        protected override void OnKeyUp(KeyboardKeyEventArgs e)
+        {
+            base.OnKeyUp(e);
+            if (e.Key == Keys.Space) isJumping = false;
+        }
+
         private void SetFullscreenMode()
         {
             WindowState = WindowState.Fullscreen;
-            if (_args.Contains("--mac"))
-            {
-                vpScale = 1.0f;
-                viewport = new Viewport()
-                {
-                    Top = 0,
-                    Left = 0,
-                    Width = 1 * vpScale,
-                    Height = 1 * vpScale,
-                    Window = this
-                };
-            }
+            if (_args.Contains("--mac")) vpScale = 1.0f;
         }
 
-        /// <summary>Nastaví okno zpět do okna (windowed mode).</summary>
         private void SetWindowedMode()
         {
             WindowState = WindowState.Normal;
-            if (_args.Contains("--mac"))
-            {
-                vpScale = 2.0f;
-                viewport = new Viewport()
-                {
-                    Top = 0,
-                    Left = 0,
-                    Width = 1 * vpScale,
-                    Height = 1 * vpScale,
-                    Window = this
-                };
-            }
+            if (_args.Contains("--mac")) vpScale = 2.0f;
         }
     }
 }
