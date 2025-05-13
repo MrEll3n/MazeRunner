@@ -20,7 +20,7 @@ namespace ZPG
         public float DelayBeforeTeleport { get; set; }   = 1.0f;
 
         /// <summary>Doba, po kterou se po teleportu nedá portál znovu spustit (s).</summary>
-        public float CooldownAfterTeleport { get; set; } = 2.0f;
+        public float CooldownAfterTeleport { get; set; } = 6.0f;
 
         /* ---------- interní stav ---------- */
 
