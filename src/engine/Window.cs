@@ -372,13 +372,17 @@ namespace ZPG
             // === Teleporty ===
             foreach (var trigger in mapReader.GetTeleportTriggers())
             {
-                float dist = (trigger.Position - player.Position).Length;
-                if (dist < player.CollisionRadius)
+                if (trigger.IsColliding(player))
                 {
                     trigger.OnPlayerEnter(player);
                     break;
                 }
+                else
+                {
+                    trigger.OnPlayerExit(player);
+                }
             }
+
 
             foreach (var trigger in mapReader.GetTeleportTriggers())
                 trigger.Update(dt);

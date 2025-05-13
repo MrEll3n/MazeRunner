@@ -129,6 +129,7 @@ namespace ZPG
 
         public bool IsColliding(Player plr)
         {
+            Console.WriteLine($"[DEBUG] playerY: {plr.Position.Y:F2} .. {plr.Position.Y + plr.CameraHeight:F2}, basePosY: {basePosY:F2}, posY: {Position.Y:F2}");
             float teleportRadius = 1.2f;
             float teleportHeight = 2.5f;
 
@@ -213,7 +214,7 @@ namespace ZPG
             if (currentPlayer == null) return;
 
             isTeleporting           = true;
-            currentPlayer.Position  = TargetPosition + new Vector3(0, 0.1f, 0);
+            currentPlayer.Position  = TargetPosition + new Vector3(0, -1f, 0);
             currentPlayer.Velocity  = Vector3.Zero;
 
             cooldownTimer = CooldownAfterTeleport;
