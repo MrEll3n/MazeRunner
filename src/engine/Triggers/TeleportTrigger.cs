@@ -1,4 +1,5 @@
 using OpenTK.Mathematics;
+using OpenTK.Graphics.OpenGL;
 using System;
 
 namespace ZPG
@@ -17,21 +18,23 @@ namespace ZPG
         public Vector3 TargetPosition { get; set; }
 
         /// <summary>Čas, po jak dlouhé době přenos nastane (s).</summary>
-        public float DelayBeforeTeleport { get; set; }   = 1.0f;
+        public float DelayBeforeTeleport { get; set; } = 1.0f;
 
         /// <summary>Doba, po kterou se po teleportu nedá portál znovu spustit (s).</summary>
         public float CooldownAfterTeleport { get; set; } = 6.0f;
 
+        public float Transparency { get; set; } = 0.65f;
+
         /* ---------- interní stav ---------- */
 
-        private float animationTime  = 0f;   // pro sinusové pohupování
-        private float basePosY       = 0f;   // „nulová“ výška portálu
-        private float rotationAngle  = 0f;   // úhel rotace portálu (pro animaci)
+        private float animationTime = 0f;   // pro sinusové pohupování
+        private float basePosY = 0f;   // „nulová“ výška portálu
+        private float rotationAngle = 0f;   // úhel rotace portálu (pro animaci)
 
         private Player currentPlayer = null; // hráč, který právě stojí v portálu
-        private float  delayTimer    = 0f;   // odpočítávání před teleportem
-        private float  cooldownTimer = 0f;   // lokální cooldown
-        private bool   isTeleporting = false;
+        private float delayTimer = 0f;   // odpočítávání před teleportem
+        private float cooldownTimer = 0f;   // lokální cooldown
+        private bool isTeleporting = false;
 
         // --- sdílený globální cooldown (aby se neřetězily portály) ---
         private static float globalCooldown = 0f;
@@ -39,19 +42,19 @@ namespace ZPG
 
         /* ---------- rozměry + kolizní tolerance ---------- */
 
-        public float Width  { get; private set; }
+        public float Width { get; private set; }
         public float Height { get; private set; }
-        public float Depth  { get; private set; }
+        public float Depth { get; private set; }
 
         private float horizRadius;   // poloměr pro X-Z kolizi
         private float vertTolerance; // povolená odchylka ve výšce
-        
+
         public FadeOverlay FadeOverlay { get; set; }
 
         private void RecomputeCollisionBounds()
         {
-            horizRadius   = MathF.Max(Width, Depth) * 0.5f + 0.1f; // malá rezerva
-            vertTolerance = Height * 0.5f               + 0.1f;
+            horizRadius = MathF.Max(Width, Depth) * 0.5f + 0.1f; // malá rezerva
+            vertTolerance = Height * 0.5f + 0.1f;
         }
 
         /* ---------- konstrukce ---------- */
@@ -67,14 +70,14 @@ namespace ZPG
             // textura portálu
             try
             {
-                TextureID = TextureLoader.LoadTexture("textures/teleport.jpg");
+                TextureID = TextureLoader.LoadTexture("textures/teleport.png");
             }
             catch
             {
                 TextureID = 0;
             }
         }
-        
+
         public override Matrix4 GetModelMatrix()
         {
             return Matrix4.CreateRotationY(rotationAngle)
@@ -93,13 +96,13 @@ namespace ZPG
             float h = 1.0f;
             float stretch = 1.3f; // faktor protažení ve vertikálním směru
 
-            Vertices.Add(new Vertex(new Vector3( 0,  h * stretch, 0), new Vector2(0.5f, 1f))); // 0 – horní špička
-            Vertices.Add(new Vertex(new Vector3( 0, -h * stretch, 0), new Vector2(0.5f, 0f))); // 1 – spodní špička
+            Vertices.Add(new Vertex(new Vector3(0, h * stretch, 0), new Vector2(0.5f, 1f))); // 0 – horní špička
+            Vertices.Add(new Vertex(new Vector3(0, -h * stretch, 0), new Vector2(0.5f, 0f))); // 1 – spodní špička
 
-            Vertices.Add(new Vertex(new Vector3( 0, 0, -h), new Vector2(0.5f, .5f))); // 2 N
-            Vertices.Add(new Vertex(new Vector3( h, 0,  0), new Vector2(1f,   .5f))); // 3 E
-            Vertices.Add(new Vertex(new Vector3( 0, 0,  h), new Vector2(0.5f, .5f))); // 4 S
-            Vertices.Add(new Vertex(new Vector3(-h, 0,  0), new Vector2(0f,   .5f))); // 5 W
+            Vertices.Add(new Vertex(new Vector3(0, 0, -h), new Vector2(0.5f, .5f))); // 2 N
+            Vertices.Add(new Vertex(new Vector3(h, 0, 0), new Vector2(1f, .5f))); // 3 E
+            Vertices.Add(new Vertex(new Vector3(0, 0, h), new Vector2(0.5f, .5f))); // 4 S
+            Vertices.Add(new Vertex(new Vector3(-h, 0, 0), new Vector2(0f, .5f))); // 5 W
 
             // horní poloviny – CCW při pohledu zvenčí ⇒ normály ↑
             AddFace(0, 3, 2);
@@ -174,7 +177,7 @@ namespace ZPG
             if (plr == currentPlayer && !isTeleporting && cooldownTimer <= 0f)
             {
                 currentPlayer = null;
-                delayTimer    = 0f;
+                delayTimer = 0f;
             }
         }
 
@@ -187,7 +190,7 @@ namespace ZPG
             Position = new Vector3(Position.X,
                                    basePosY + 0.1f * MathF.Sin(animationTime * 2f),
                                    Position.Z);
-            
+
             rotationAngle += dt * .5f; // 1.0f = rychlost otáčení (radiány za sekundu)
             if (rotationAngle > MathF.Tau) rotationAngle -= MathF.Tau;
 
@@ -215,7 +218,7 @@ namespace ZPG
         {
             if (currentPlayer == null || FadeOverlay == null || FadeOverlay.IsActive)
                 return;
-            
+
             if (currentPlayer == null || FadeOverlay == null)
             {
                 Console.WriteLine("[TeleportTrigger] Teleport aborted – no player or overlay.");
@@ -263,6 +266,29 @@ namespace ZPG
         private static bool IsGlobalCooldown()
         {
             lock (cooldownLock) { return globalCooldown > 0f; }
+        }
+
+        /* ----------------- override draw ----------------- */
+        public override void Draw(Camera camera)
+        {
+            Matrix4 modelMatrix = GetModelMatrix();
+
+            Shader.Use();
+            Shader.SetUniform("projection", camera.Projection);
+            Shader.SetUniform("view", camera.View);
+            Shader.SetUniform("model", modelMatrix);
+            Shader.SetUniform("uAlpha", Transparency);
+
+            if (TextureID > 0)
+            {
+                GL.ActiveTexture(TextureUnit.Texture0);
+                GL.BindTexture(TextureTarget.Texture2D, TextureID);
+                Shader.SetUniform("uTexture", 0);
+            }
+
+            GL.BindVertexArray(vao);
+            GL.DrawElements(PrimitiveType.Triangles, Triangles.Count * 3, DrawElementsType.UnsignedInt, IntPtr.Zero);
+            GL.BindVertexArray(0);
         }
     }
 }

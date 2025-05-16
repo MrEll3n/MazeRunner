@@ -28,6 +28,7 @@ namespace ZPG
         private int wallTexture, floorTexture, ceilingTexture;
         private Shader basicShader;
         private Shader fadeShader;
+        private Shader transShader;
         private FadeOverlay teleportFadeOverlay;
         private string[] _args { get; set; }
 
@@ -44,6 +45,8 @@ namespace ZPG
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.CullFace);
             GL.CullFace(CullFaceMode.Back);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+            GL.Enable(EnableCap.Blend);
             GL.FrontFace(FrontFaceDirection.Ccw);
 
             for (int i = 0; i < _args.Length; ++i)
@@ -58,6 +61,7 @@ namespace ZPG
 
             basicShader = new Shader("shaders/basic.vert", "shaders/basic.frag");
             fadeShader = new Shader("shaders/fade.vert", "shaders/fade.frag");
+            transShader = new Shader("shaders/basic.vert", "shaders/transparent.frag");
             teleportFadeOverlay = new FadeOverlay { Shader = fadeShader };
 
             wallTexture = TextureLoader.LoadTexture("textures/wall.png");
@@ -77,9 +81,10 @@ namespace ZPG
 
             foreach (var trigger in mapReader.GetTeleportTriggers())
             {
-                trigger.Shader = basicShader;
+                trigger.Shader = transShader;
                 trigger.TextureID = teleportTextureID;
                 trigger.FadeOverlay = teleportFadeOverlay;
+                trigger.Transparency = 0.65f;
             }
 
             mapReader.GetRenderables().Add(new Quad(128, 128, 0f, true) { Shader = basicShader, TextureID = floorTexture });
@@ -97,11 +102,35 @@ namespace ZPG
             viewport.Set();
             viewport.Clear();
 
+            // First render opaque objects
             basicShader.Use();
             player.Flashlight.Apply(basicShader);
-            mapReader.GetRenderables().ForEach(m => m.Draw(player.Camera));
-            mapReader.GetTeleportTriggers().ForEach(t => t.Draw(player.Camera));
 
+            // Draw all non-transparent objects
+            foreach (var renderable in mapReader.GetRenderables())
+            {
+                if (!(renderable is TeleportTrigger)) // Skip teleport triggers
+                    renderable.Draw(player.Camera);
+            }
+
+            // Now render transparent objects with proper settings
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+            GL.DepthMask(false); // Don't write to depth buffer for transparent objects
+
+            transShader.Use();
+            player.Flashlight.Apply(transShader);
+
+            // Draw teleport triggers with transparency
+            foreach (var trigger in mapReader.GetTeleportTriggers())
+            {
+                trigger.Draw(player.Camera);
+            }
+
+            // Reset depth mask
+            GL.DepthMask(true);
+
+            // Draw the fade overlay
             fadeShader.Use();
             teleportFadeOverlay.DrawFullScreenQuad(Width, Height);
 

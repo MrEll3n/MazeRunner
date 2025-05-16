@@ -18,7 +18,7 @@ namespace ZPG
         public BindingList<Vertex> Vertices { get; set; } = new();
         public BindingList<Triangle> Triangles { get; set; } = new();
 
-        int vbo, ebo, vao;
+        protected int vbo, ebo, vao;
 
         public void Construct()
         {
@@ -97,7 +97,7 @@ namespace ZPG
         /// <summary>
         /// Vykreslí model pomocí aktuálního shaderu a kamery.
         /// </summary>
-        public void Draw(Camera camera)
+        public virtual void Draw(Camera camera)
         {
             Matrix4 modelMatrix = GetModelMatrix();
 
