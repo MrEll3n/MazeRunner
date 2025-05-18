@@ -24,21 +24,24 @@ namespace ZPG
         private bool isJumping = false;
         private int frameCount = 0;
         private double fpsTimer = 0;
+        private int frameCountFinal = 0;
 
-        private int wallTexture, floorTexture, ceilingTexture;
+        private int wallTexture, floorTexture, ceilingTexture, collectibleTexture;
+        private HudRenderer hud;
         private Shader basicShader;
         private Shader fadeShader;
         private Shader transShader;
+        private Shader collectibleShader;
         private FadeOverlay teleportFadeOverlay;
         private string[] _args { get; set; }
+        private int collectedCount = 0;
 
         public Window(string[] args) : base(GameWindowSettings.Default, NativeWindowSettings.Default)
         {
             _args = args;
         }
 
-        protected override void OnLoad()
-        {
+        protected override void OnLoad() {
             base.OnLoad();
             GL.LoadBindings(new GLFWBindingsContext());
 
@@ -49,8 +52,7 @@ namespace ZPG
             GL.Enable(EnableCap.Blend);
             GL.FrontFace(FrontFaceDirection.Ccw);
 
-            for (int i = 0; i < _args.Length; ++i)
-            {
+            for (int i = 0; i < _args.Length; ++i) {
                 if (_args[i] == "--fullscreen")
                     SetFullscreenMode();
                 if (_args[i] == "--mac")
@@ -62,6 +64,7 @@ namespace ZPG
             basicShader = new Shader("shaders/basic.vert", "shaders/basic.frag");
             fadeShader = new Shader("shaders/fade.vert", "shaders/fade.frag");
             transShader = new Shader("shaders/basic.vert", "shaders/transparent.frag");
+            collectibleShader = new Shader("shaders/basic.vert", "shaders/collectible.frag");
             teleportFadeOverlay = new FadeOverlay { Shader = fadeShader };
 
             wallTexture = TextureLoader.LoadTexture("textures/wall.png");
@@ -69,26 +72,59 @@ namespace ZPG
             ceilingTexture = TextureLoader.LoadTexture("textures/ceiling.png");
             int teleportTextureID = TextureLoader.LoadTexture("textures/teleport.jpg");
             if (teleportTextureID == 0) teleportTextureID = wallTexture;
+            collectibleTexture = TextureLoader.LoadTexture("textures/paper.png");
+            
+            hud = new HudRenderer("textures/basic_font.png");
 
             mapReader = new MapReader(basicShader);
             mapReader.ReadFile("map.txt");
 
-            foreach (var wall in mapReader.GetWalls())
-            {
+            foreach (var wall in mapReader.GetWalls()) {
                 wall.Shader = basicShader;
                 wall.TextureID = wallTexture;
             }
 
-            foreach (var trigger in mapReader.GetTeleportTriggers())
-            {
+            foreach (var trigger in mapReader.GetTeleportTriggers()) {
                 trigger.Shader = transShader;
                 trigger.TextureID = teleportTextureID;
                 trigger.FadeOverlay = teleportFadeOverlay;
                 trigger.Transparency = 0.65f;
             }
 
-            mapReader.GetRenderables().Add(new Quad(128, 128, 0f, true) { Shader = basicShader, TextureID = floorTexture });
-            mapReader.GetRenderables().Add(new Quad(128, 128, 3f, false) { Shader = basicShader, TextureID = ceilingTexture });
+            foreach (var collectible in mapReader.GetCollectibles()) {
+                collectible.Shader = collectibleShader;
+                collectible.TextureID = collectibleTexture;
+            }
+
+            mapReader.GetRenderables().Add(
+                new Quad(
+                    center: new Vector3(0, 0f, 0),
+                    rightDir: Vector3.UnitX,               
+                    upDir: Vector3.UnitZ,                  
+                    width: 128f,
+                    height: 128f,
+                    flip: true
+                )
+                {
+                    Shader = basicShader,
+                    TextureID = floorTexture
+                }
+            );
+
+            mapReader.GetRenderables().Add(
+                new Quad(
+                    center: new Vector3(0, 3f, 0),
+                    rightDir: Vector3.UnitX,
+                    upDir: Vector3.UnitZ,
+                    width: 128f,
+                    height: 128f,
+                    flip: false
+                )
+                {
+                    Shader = basicShader,
+                    TextureID = ceilingTexture
+                }
+            );
 
             player = new Player(mapReader.GetPlayerStartPosition(), this);
             player.TriggerModels = mapReader.GetTeleportTriggers().Cast<Model>().ToList();
@@ -102,44 +138,49 @@ namespace ZPG
             viewport.Set();
             viewport.Clear();
 
-            // First render opaque objects
             basicShader.Use();
             player.Flashlight.Apply(basicShader);
 
-            // Draw all non-transparent objects
             foreach (var renderable in mapReader.GetRenderables())
             {
-                if (!(renderable is TeleportTrigger)) // Skip teleport triggers
+                if (!(renderable is TeleportTrigger or Collectible))
                     renderable.Draw(player.Camera);
             }
 
-            // Now render transparent objects with proper settings
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-            GL.DepthMask(false); // Don't write to depth buffer for transparent objects
+            GL.DepthMask(false);
 
             transShader.Use();
             player.Flashlight.Apply(transShader);
+            player.Flashlight.Apply(collectibleShader);
 
-            // Draw teleport triggers with transparency
-            foreach (var trigger in mapReader.GetTeleportTriggers())
+            foreach (var transparent in mapReader.GetTeleportTriggers().Cast<Model>().Concat(mapReader.GetCollectibles()))
             {
-                trigger.Draw(player.Camera);
+                if (transparent is Collectible c && c.IsCollected)
+                    continue;
+                transparent.Draw(player.Camera);
             }
 
-            // Reset depth mask
-            GL.DepthMask(true);
+            hud.DrawText($"Papers: {collectedCount}", 0.02f, 0.02f, 2f, Width, Height, align: TextAlign.Left);
+            hud.DrawText($"{frameCountFinal}", 0.98f, 0.95f, 1f, Width, Height, align: TextAlign.Right);
+            
 
-            // Draw the fade overlay
+            GL.DepthMask(true);
+            
+            
+
             fadeShader.Use();
             teleportFadeOverlay.DrawFullScreenQuad(Width, Height);
+            
 
             SwapBuffers();
             frameCount++;
             fpsTimer += args.Time;
             if (fpsTimer >= 1.0)
             {
-                Title = $"MazeRunner - FPS: {frameCount}";
+                Title = $"MazeRunner - FPS: {frameCount}, Collected: {collectedCount}";
+                frameCountFinal = frameCount;
                 frameCount = 0;
                 fpsTimer = 0;
             }
@@ -207,6 +248,20 @@ namespace ZPG
                 else trigger.OnPlayerExit(player);
             }
             foreach (var trigger in mapReader.GetTeleportTriggers()) trigger.Update(dt);
+
+            foreach (var collectible in mapReader.GetCollectibles())
+            {
+                if (!collectible.IsCollected)
+                {
+                    collectible.CheckTrigger(player);
+                    if (collectible.IsCollected)
+                    {
+                        collectedCount++;
+                        Console.WriteLine($"[INFO] Collected: {collectedCount}");
+                    }
+                }
+            }
+
             player.UpdateCamera();
             teleportFadeOverlay.Update(dt);
         }
@@ -214,7 +269,6 @@ namespace ZPG
         protected override void OnMouseMove(MouseMoveEventArgs e)
         {
             base.OnMouseMove(e);
-            //Console.WriteLine($"Mouse delta: {e.Delta}");
             player.Camera.RotateY(-e.Delta.X * 0.002f);
             player.Camera.RotateX(-e.Delta.Y * 0.002f);
         }
@@ -231,7 +285,6 @@ namespace ZPG
         protected override void OnKeyDown(KeyboardKeyEventArgs e)
         {
             base.OnKeyDown(e);
-            //Console.WriteLine($"Key pressed: {e.Key}");
 
             if (e.Alt && e.Key == Keys.Enter)
             {
