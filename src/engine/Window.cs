@@ -24,6 +24,7 @@ namespace ZPG
         private bool isJumping = false;
         private int frameCount = 0;
         private double fpsTimer = 0;
+        private int frameCountFinal = 0;
 
         private int wallTexture, floorTexture, ceilingTexture, collectibleTexture;
         private HudRenderer hud;
@@ -161,7 +162,9 @@ namespace ZPG
                 transparent.Draw(player.Camera);
             }
 
-            hud.DrawText($"Collected: {collectedCount}", 20, 20, 1.0f, Width, Height);
+            hud.DrawText($"Papers: {collectedCount}", 20, 20, 0.8f, Width, Height);
+            hud.DrawText($"{frameCountFinal}", 550, 320, 0.5f, Width, Height);
+            
 
             GL.DepthMask(true);
             
@@ -177,6 +180,7 @@ namespace ZPG
             if (fpsTimer >= 1.0)
             {
                 Title = $"MazeRunner - FPS: {frameCount}, Collected: {collectedCount}";
+                frameCountFinal = frameCount;
                 frameCount = 0;
                 fpsTimer = 0;
             }

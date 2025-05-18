@@ -11,7 +11,7 @@ namespace ZPG
         private readonly Shader shader;
         private int vao, vbo;
         private const int CHAR_SIZE = 32;
-        private const int CHAR_COLS = 8;
+        private const int CHAR_COLS = 16;
         private const int CHAR_ROWS = 8;
 
         public HudRenderer(string texturePath)
@@ -38,11 +38,15 @@ namespace ZPG
 
         public void DrawText(string text, float x, float y, float scale, int screenWidth, int screenHeight)
         {
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             GL.Disable(EnableCap.DepthTest);
+
             GL.BindVertexArray(vao);
             shader.Use();
-            shader.SetUniform("projection", Matrix4.CreateOrthographicOffCenter(0, screenWidth, screenHeight, 0, -1, 1));
-
+            
+            shader.SetUniform("projection", Matrix4.CreateOrthographicOffCenter(0, screenWidth, 0, screenHeight, -1, 1));
+            
             GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, textureId);
             shader.SetUniform("uTexture", 0);
@@ -51,16 +55,22 @@ namespace ZPG
 
             for (int i = 0; i < text.Length; i++)
             {
-                int ascii = text[i] - 32;
-                if (ascii < 0 || ascii >= CHAR_COLS * CHAR_ROWS)
+                int ascii = (int)text[i];
+                if (ascii < 32 || ascii > 127)
                     continue;
 
-                int col = ascii % CHAR_COLS;
-                int row = ascii / CHAR_COLS;
+                int index = ascii;
+                int col = index % CHAR_COLS;
+                int row = index / CHAR_COLS;
 
-                float tx = col / (float)CHAR_COLS;
-                float ty = row / (float)CHAR_ROWS;
-                float ts = 1.0f / CHAR_COLS;
+                float tw = 1.0f / CHAR_COLS;
+                float th = 1.0f / CHAR_ROWS;
+
+                float tx = col * tw;
+                float ty = 1.0f - (row + 1) * th;
+
+                float tx1 = tx;
+                float tx2 = tx + tw;
 
                 float xpos = x + i * CHAR_SIZE * scale;
                 float ypos = y;
@@ -68,23 +78,28 @@ namespace ZPG
                 float w = CHAR_SIZE * scale;
                 float h = CHAR_SIZE * scale;
 
-                // 2 triangles (6 vertices)
                 vertices.AddRange(new float[] {
-                    xpos,     ypos + h, tx,       ty + ts,
-                    xpos + w, ypos,     tx + ts,  ty,
-                    xpos,     ypos,     tx,       ty,
+                    // Triangle 1 (Top-left, Top-right, Bottom-left)
+                    xpos,     ypos,     tx1,  ty,
+                    xpos + w, ypos,     tx2,  ty,
+                    xpos,     ypos + h, tx1,  ty + th,
 
-                    xpos,     ypos + h, tx,       ty + ts,
-                    xpos + w, ypos + h, tx + ts,  ty + ts,
-                    xpos + w, ypos,     tx + ts,  ty,
+                    // Triangle 2 (Bottom-left, Top-right, Bottom-right)
+                    xpos + w, ypos,     tx2,  ty,
+                    xpos + w, ypos + h, tx2,  ty + th,
+                    xpos,     ypos + h, tx1,  ty + th
                 });
             }
 
-            GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
-            GL.BufferSubData(BufferTarget.ArrayBuffer, IntPtr.Zero, vertices.Count * sizeof(float), vertices.ToArray());
+            if (vertices.Count > 0)
+            {
+                GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
+                GL.BufferSubData(BufferTarget.ArrayBuffer, IntPtr.Zero, vertices.Count * sizeof(float), vertices.ToArray());
+                GL.DrawArrays(PrimitiveType.Triangles, 0, vertices.Count / 4);
+            }
 
-            GL.DrawArrays(PrimitiveType.Triangles, 0, vertices.Count / 4);
             GL.BindVertexArray(0);
+            GL.BindTexture(TextureTarget.Texture2D, 0);
             GL.Enable(EnableCap.DepthTest);
         }
     }
