@@ -18,7 +18,7 @@ namespace ZPG
         /// <param name="height">Výška quadu (ve směru upDir).</param>
         /// <param name="flip">Otočí normálu a trojúhelníky.</param>
         /// <param name="tileSize">Velikost 1 dlaždice pro opakování textury (v metrech).</param>
-        public Quad(Vector3 center, Vector3 rightDir, Vector3 upDir, float width, float height, bool flip = false, float tileSize = 3f)
+        public Quad(Vector3 center, Vector3 rightDir, Vector3 upDir, float width, float height, bool flip = false, float tileSize = 3f, bool uvRepeat = true)
         {
             Vector3 right = rightDir.Normalized() * (width / 2f);
             Vector3 up = upDir.Normalized() * (height / 2f);
@@ -29,14 +29,23 @@ namespace ZPG
             Vector3 p2 = center + right + up; // pravý horní
             Vector3 p3 = center - right + up; // levý horní
 
-            float uRepeat = width / tileSize;
-            float vRepeat = height / tileSize;
+            if (uvRepeat) {
+                float uRepeat = width / tileSize;
+                float vRepeat = height / tileSize;
 
-            // UV mapování
-            Vertices.Add(new Vertex(p0, new Vector2(0, 0)));
-            Vertices.Add(new Vertex(p1, new Vector2(uRepeat, 0)));
-            Vertices.Add(new Vertex(p2, new Vector2(uRepeat, vRepeat)));
-            Vertices.Add(new Vertex(p3, new Vector2(0, vRepeat)));
+                // UV mapování
+                Vertices.Add(new Vertex(p0, new Vector2(0, 0)));
+                Vertices.Add(new Vertex(p1, new Vector2(uRepeat, 0)));
+                Vertices.Add(new Vertex(p2, new Vector2(uRepeat, vRepeat)));
+                Vertices.Add(new Vertex(p3, new Vector2(0, vRepeat)));
+            }
+            else {
+                Vertices.Add(new Vertex(p0, new Vector2(0, 0)));
+                Vertices.Add(new Vertex(p1, new Vector2(1, 0)));
+                Vertices.Add(new Vertex(p2, new Vector2(1, 1)));
+                Vertices.Add(new Vertex(p3, new Vector2(0, 1)));
+            }
+
 
             if (flip)
             {

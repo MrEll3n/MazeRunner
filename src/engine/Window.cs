@@ -25,10 +25,11 @@ namespace ZPG
         private int frameCount = 0;
         private double fpsTimer = 0;
 
-        private int wallTexture, floorTexture, ceilingTexture;
+        private int wallTexture, floorTexture, ceilingTexture, collectibleTexture;
         private Shader basicShader;
         private Shader fadeShader;
         private Shader transShader;
+        private Shader collectibleShader;
         private FadeOverlay teleportFadeOverlay;
         private string[] _args { get; set; }
 
@@ -37,8 +38,7 @@ namespace ZPG
             _args = args;
         }
 
-        protected override void OnLoad()
-        {
+        protected override void OnLoad() {
             base.OnLoad();
             GL.LoadBindings(new GLFWBindingsContext());
 
@@ -49,8 +49,7 @@ namespace ZPG
             GL.Enable(EnableCap.Blend);
             GL.FrontFace(FrontFaceDirection.Ccw);
 
-            for (int i = 0; i < _args.Length; ++i)
-            {
+            for (int i = 0; i < _args.Length; ++i) {
                 if (_args[i] == "--fullscreen")
                     SetFullscreenMode();
                 if (_args[i] == "--mac")
@@ -62,6 +61,7 @@ namespace ZPG
             basicShader = new Shader("shaders/basic.vert", "shaders/basic.frag");
             fadeShader = new Shader("shaders/fade.vert", "shaders/fade.frag");
             transShader = new Shader("shaders/basic.vert", "shaders/transparent.frag");
+            collectibleShader = new Shader("shaders/basic.vert", "shaders/collectible.frag");
             teleportFadeOverlay = new FadeOverlay { Shader = fadeShader };
 
             wallTexture = TextureLoader.LoadTexture("textures/wall.png");
@@ -69,22 +69,26 @@ namespace ZPG
             ceilingTexture = TextureLoader.LoadTexture("textures/ceiling.png");
             int teleportTextureID = TextureLoader.LoadTexture("textures/teleport.jpg");
             if (teleportTextureID == 0) teleportTextureID = wallTexture;
+            collectibleTexture = TextureLoader.LoadTexture("textures/paper.png");
 
             mapReader = new MapReader(basicShader);
             mapReader.ReadFile("map.txt");
 
-            foreach (var wall in mapReader.GetWalls())
-            {
+            foreach (var wall in mapReader.GetWalls()) {
                 wall.Shader = basicShader;
                 wall.TextureID = wallTexture;
             }
 
-            foreach (var trigger in mapReader.GetTeleportTriggers())
-            {
+            foreach (var trigger in mapReader.GetTeleportTriggers()) {
                 trigger.Shader = transShader;
                 trigger.TextureID = teleportTextureID;
                 trigger.FadeOverlay = teleportFadeOverlay;
                 trigger.Transparency = 0.65f;
+            }
+
+            foreach (var collectible in mapReader.GetCollectibles()) {
+                collectible.Shader = collectibleShader;
+                collectible.TextureID = collectibleTexture;
             }
 
             // Podlaha v rovině XZ na výšce Y = 0
@@ -138,8 +142,9 @@ namespace ZPG
             // Draw all non-transparent objects
             foreach (var renderable in mapReader.GetRenderables())
             {
-                if (!(renderable is TeleportTrigger)) // Skip teleport triggers
+                if (!(renderable is TeleportTrigger or Collectible)) // Skip teleport triggers
                     renderable.Draw(player.Camera);
+                    
             }
 
             // Now render transparent objects with proper settings
@@ -149,11 +154,12 @@ namespace ZPG
 
             transShader.Use();
             player.Flashlight.Apply(transShader);
+            player.Flashlight.Apply(collectibleShader);
 
-            // Draw teleport triggers with transparency
-            foreach (var trigger in mapReader.GetTeleportTriggers())
+            // Draw teleport triggers and collectibles with transparency using a unified loop - thanks chat for unifiing that 2 for loops :D
+            foreach (var transparent in mapReader.GetTeleportTriggers().Cast<Model>().Concat(mapReader.GetCollectibles()))
             {
-                trigger.Draw(player.Camera);
+                transparent.Draw(player.Camera);
             }
 
             // Reset depth mask

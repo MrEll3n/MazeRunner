@@ -40,6 +40,17 @@ namespace ZPG
             Console.WriteLine("[MapReader] Inicializován");
         }
 
+        public List<Collectible> GetCollectibles()
+        {
+            List<Collectible> collectibles = new();
+            foreach (var model in renderables)
+            {
+                if (model is Collectible collectible)
+                    collectibles.Add(collectible);
+            }
+            return collectibles;
+        }
+
         public void ReadFile(string filePath)
         {
             if (!File.Exists(filePath))
@@ -97,7 +108,22 @@ namespace ZPG
                         else if (IsDoor(c)) { }
                         else if (IsSolidObject(c)) { }
                         else if (IsEnemy(c)) { }
-                        else if (IsItem(c)) { }
+                        else if (IsItem(c)) 
+                        {
+                            
+                            Vector3 collectiblePosition = new Vector3(x * wallLength, 1.0f, z * wallLength);
+                            Vector2 collectibleSize = new Vector2(1.2f, 1.2f); // např. velikost mince
+
+                            var collectible = new Collectible(collectiblePosition, collectibleSize)
+                            {
+                                Shader = shader,
+                                TextureID = TextureLoader.LoadTexture("textures/paper.png"),
+                                OnCollected = () => Console.WriteLine($"[Collectible] Player collected item at ({x}, {z})")
+                            };
+
+                            renderables.Add(collectible);
+                            
+                        }
                         else if (char.IsDigit(c))
                         {
                             Vector2i tile = new(x, z);
