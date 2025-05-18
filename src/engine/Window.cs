@@ -162,8 +162,8 @@ namespace ZPG
                 transparent.Draw(player.Camera);
             }
 
-            hud.DrawText($"Papers: {collectedCount}", 20, 20, 0.8f, Width, Height);
-            hud.DrawText($"{frameCountFinal}", 550, 320, 0.5f, Width, Height);
+            hud.DrawText($"Papers: {collectedCount}", 0.02f, 0.02f, 2f, Width, Height, align: TextAlign.Left);
+            hud.DrawText($"{frameCountFinal}", 0.98f, 0.95f, 1f, Width, Height, align: TextAlign.Right);
             
 
             GL.DepthMask(true);

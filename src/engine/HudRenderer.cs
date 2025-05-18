@@ -36,17 +36,41 @@ namespace ZPG
             GL.BindVertexArray(0);
         }
 
-        public void DrawText(string text, float x, float y, float scale, int screenWidth, int screenHeight)
+        public void DrawText(
+            string text,
+            float normX,
+            float normY,
+            float sizeNorm,
+            int screenWidth,
+            int screenHeight,
+            TextAlign align = TextAlign.Left)
         {
+            float baseHeight = 1080f;
+            float scale = (screenHeight / baseHeight) * sizeNorm;
+
+            float textWidth = text.Length * CHAR_SIZE * scale;
+            float x = normX * screenWidth;
+            float y = normY * screenHeight;
+
+            // Zarovnání podle typu
+            switch (align)
+            {
+                case TextAlign.Center:
+                    x -= textWidth / 2f;
+                    break;
+                case TextAlign.Right:
+                    x -= textWidth;
+                    break;
+            }
+
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             GL.Disable(EnableCap.DepthTest);
 
             GL.BindVertexArray(vao);
             shader.Use();
-            
             shader.SetUniform("projection", Matrix4.CreateOrthographicOffCenter(0, screenWidth, 0, screenHeight, -1, 1));
-            
+
             GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, textureId);
             shader.SetUniform("uTexture", 0);
@@ -79,12 +103,10 @@ namespace ZPG
                 float h = CHAR_SIZE * scale;
 
                 vertices.AddRange(new float[] {
-                    // Triangle 1 (Top-left, Top-right, Bottom-left)
                     xpos,     ypos,     tx1,  ty,
                     xpos + w, ypos,     tx2,  ty,
                     xpos,     ypos + h, tx1,  ty + th,
 
-                    // Triangle 2 (Bottom-left, Top-right, Bottom-right)
                     xpos + w, ypos,     tx2,  ty,
                     xpos + w, ypos + h, tx2,  ty + th,
                     xpos,     ypos + h, tx1,  ty + th
