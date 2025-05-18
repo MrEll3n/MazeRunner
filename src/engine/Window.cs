@@ -87,8 +87,37 @@ namespace ZPG
                 trigger.Transparency = 0.65f;
             }
 
-            mapReader.GetRenderables().Add(new Quad(128, 128, 0f, true) { Shader = basicShader, TextureID = floorTexture });
-            mapReader.GetRenderables().Add(new Quad(128, 128, 3f, false) { Shader = basicShader, TextureID = ceilingTexture });
+            // Podlaha v rovině XZ na výšce Y = 0
+            mapReader.GetRenderables().Add(
+                new Quad(
+                    center: new Vector3(0, 0f, 0),
+                    rightDir: Vector3.UnitX,               
+                    upDir: Vector3.UnitZ,                  
+                    width: 128f,
+                    height: 128f,
+                    flip: true // normály dolů
+                )
+                {
+                    Shader = basicShader,
+                    TextureID = floorTexture
+                }
+            );
+
+            // Strop v rovině XZ na výšce Y = 3
+            mapReader.GetRenderables().Add(
+                new Quad(
+                    center: new Vector3(0, 3f, 0),
+                    rightDir: Vector3.UnitX,
+                    upDir: Vector3.UnitZ,
+                    width: 128f,
+                    height: 128f,
+                    flip: false // normály nahoru
+                )
+                {
+                    Shader = basicShader,
+                    TextureID = ceilingTexture
+                }
+            );
 
             player = new Player(mapReader.GetPlayerStartPosition(), this);
             player.TriggerModels = mapReader.GetTeleportTriggers().Cast<Model>().ToList();
