@@ -9,7 +9,7 @@ namespace ZPG
     public class Collectible : Billboard, ITriggerZone
     {
         private bool isPlayerInside = false;
-        private bool isCollected = false;
+        public bool IsCollected = false;
 
         public Action OnCollected; // Akce, která se provede po sebrání
 
@@ -26,7 +26,7 @@ namespace ZPG
         /// </summary>
         public void CheckTrigger(Player player)
         {
-            if (isCollected)
+            if (IsCollected)
                 return;
 
             bool isInsideNow = IsPlayerInside(player);
@@ -41,7 +41,7 @@ namespace ZPG
         
         public bool IsPlayerInside(Player player)
         {
-            float collectibleRadius = 1.2f;
+            float collectibleRadius = 0.6f;
             float collectibleHeight = 2.5f;
 
             float playerYMin = player.Position.Y;
@@ -61,10 +61,10 @@ namespace ZPG
 
         public virtual void OnPlayerEnter(Player player)
         {
-            if (isCollected)
+            if (IsCollected)
                 return;
 
-            isCollected = true;
+            IsCollected = true;
             Console.WriteLine($"[Collectible] Player collected the item.");
 
             // Spusť akci po sebrání
