@@ -80,5 +80,10 @@ namespace ZPG
             GL.DrawElements(PrimitiveType.Triangles, Triangles.Count * 3, DrawElementsType.UnsignedInt, IntPtr.Zero);
             GL.BindVertexArray(0);
         }
+        
+        public void SetPosition(Vector3 newPosition)
+        {
+            this.position = newPosition;
+        }
     }
 }

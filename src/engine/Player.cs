@@ -19,6 +19,12 @@ namespace ZPG
         public float CameraHeight = 1.7f;
         public float CollisionRadius = 1.0f;
 
+        private float bobTime = 0f;
+        private float bobSpeed = 10f;
+        private float bobAmount = 0.035f;
+        private float previousBobX = 0f;
+        private float previousBobY = 0f;
+
         private readonly PlayerController controller;
 
         public List<Model> TriggerModels { get; set; } = new();
@@ -29,7 +35,6 @@ namespace ZPG
         {
             Position = startPosition;
 
-            // ✅ přiřazení kamery s odkazem na okno kvůli fade efektu
             Camera = new Camera(Position + new Vector3(0, CameraHeight, 0))
             {
                 Window = window
@@ -44,7 +49,7 @@ namespace ZPG
         public void AddForce(Vector3 force) => controller.AddForce(force);
 
         public void MoveToward(Vector3 targetVelocity) => controller.MoveToward(targetVelocity);
-        
+
         public bool IsMoving => new Vector2(Velocity.X, Velocity.Z).LengthSquared > 0.05f;
 
         public void Jump(float velocityY)
@@ -57,12 +62,34 @@ namespace ZPG
             }
         }
 
-        public void UpdateCamera()
+        public void UpdateCamera(float deltaTime)
         {
-            Camera.Position = Position + new Vector3(0, CameraHeight, 0);
+            Vector3 baseCamPos = Position + new Vector3(0, CameraHeight, 0);
+            Vector2 horizVel = new(Velocity.X, Velocity.Z);
+            bool isWalking = IsOnGround && horizVel.Length > 0.05f;
+
+            // Čas bobbingu roste jen při chůzi
+            if (isWalking)
+                bobTime += deltaTime;
+
+            float frequency = 2f;
+            float targetVertical = isWalking ? MathF.Sin(bobTime * frequency * MathF.Tau) * bobAmount : 0f;
+            float targetHorizontal = isWalking ? MathF.Sin(bobTime * frequency * MathF.Tau * 0.5f) * bobAmount * 0.5f : 0f;
+
+            // Utlumení směrem k 0 pokud stojí
+            float smoothing = 10f; // vyšší = rychlejší návrat
+            if (!isWalking)
+            {
+                targetVertical = previousBobY + (0f - previousBobY) * deltaTime * smoothing;
+                targetHorizontal = previousBobX + (0f - previousBobX) * deltaTime * smoothing;
+            }
+
+            previousBobX = targetHorizontal;
+            previousBobY = targetVertical;
+
+            Camera.Position = baseCamPos + new Vector3(targetHorizontal, targetVertical, 0);
         }
 
-        // === fyzika + kolize ===
         public void MoveAndSlideMeshBased(Vector3 desiredVelocity, IEnumerable<Wall> walls, float deltaTime)
         {
             float radius = 0.3f;
