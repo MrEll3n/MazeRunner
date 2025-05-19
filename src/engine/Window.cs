@@ -265,7 +265,7 @@ namespace ZPG
                 }
             }
 
-            player.UpdateCamera();
+            player.UpdateCamera(dt);
             teleportFadeOverlay.Update(dt);
             
             Vector2 hVel = new(player.Velocity.X, player.Velocity.Z);
