@@ -256,6 +256,7 @@ namespace ZPG
             {
                 if (!collectible.IsCollected)
                 {
+                    collectible.Update(dt);
                     collectible.CheckTrigger(player);
                     if (collectible.IsCollected)
                     {

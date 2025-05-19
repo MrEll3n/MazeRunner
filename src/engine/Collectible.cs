@@ -11,19 +11,32 @@ namespace ZPG
         private bool isPlayerInside = false;
         public bool IsCollected = false;
 
-        public Action OnCollected; // Akce, která se provede po sebrání
+        public Action OnCollected;
 
         private float triggerRadius;
+
+        private float animationTime = 0f;
+        private Vector3 basePosition;
 
         public Collectible(Vector3 position, Vector2 size)
             : base(position, size, alignX: false, alignY: true, alignZ: false)
         {
             triggerRadius = Math.Max(size.X, size.Y) * 0.6f;
+            basePosition = position;
         }
 
-        /// <summary>
-        /// Kontrola, zda hráč vstoupil do sběrné zóny.
-        /// </summary>
+        public void Update(float dt)
+        {
+            if (IsCollected)
+                return;
+
+            animationTime += dt;
+
+            // sinusové pohupování nahoru/dolů
+            float offset = 0.1f * MathF.Sin(animationTime * 2f);
+            SetPosition(basePosition + new Vector3(0, offset, 0));
+        }
+
         public void CheckTrigger(Player player)
         {
             if (IsCollected)
@@ -38,7 +51,7 @@ namespace ZPG
 
             isPlayerInside = isInsideNow;
         }
-        
+
         public bool IsPlayerInside(Player player)
         {
             float collectibleRadius = 0.6f;
@@ -47,13 +60,13 @@ namespace ZPG
             float playerYMin = player.Position.Y;
             float playerYMax = player.Position.Y + player.CameraHeight;
 
-            float yBottom = GetPosition().Y - collectibleHeight / 2f;
-            float yTop = GetPosition().Y + collectibleHeight / 2f;
+            float yBottom = basePosition.Y - collectibleHeight / 2f;
+            float yTop = basePosition.Y + collectibleHeight / 2f;
 
             bool yOverlap = playerYMax >= yBottom && playerYMin <= yTop;
 
             Vector2 playerXZ = new(player.Position.X, player.Position.Z);
-            Vector2 collectibleXZ = new(GetPosition().X, GetPosition().Z);
+            Vector2 collectibleXZ = new(basePosition.X, basePosition.Z);
             float distXZ = (playerXZ - collectibleXZ).Length;
 
             return yOverlap && distXZ <= collectibleRadius;
@@ -66,21 +79,16 @@ namespace ZPG
 
             IsCollected = true;
             Console.WriteLine($"[Collectible] Player collected the item.");
-            
-            SoundManager.Instance.PlaySound("assets/sfx/paper_pickup.wav", GetPosition());
+            SoundManager.Instance.PlaySound("assets/sfx/paper_pickup.wav");
 
-            // Spusť akci po sebrání
             OnCollected?.Invoke();
         }
 
-        public virtual void OnPlayerExit(Player player)
-        {
-            // Neprovádíme nic, ale je zde kvůli rozhraní
-        }
+        public virtual void OnPlayerExit(Player player) { }
 
         public Vector3 GetPosition()
         {
-            return base.GetModelMatrix().ExtractTranslation();
+            return basePosition;
         }
     }
 }
