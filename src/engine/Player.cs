@@ -44,6 +44,8 @@ namespace ZPG
         public void AddForce(Vector3 force) => controller.AddForce(force);
 
         public void MoveToward(Vector3 targetVelocity) => controller.MoveToward(targetVelocity);
+        
+        public bool IsMoving => new Vector2(Velocity.X, Velocity.Z).LengthSquared > 0.05f;
 
         public void Jump(float velocityY)
         {

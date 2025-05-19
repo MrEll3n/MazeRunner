@@ -168,6 +168,9 @@ namespace ZPG
                 Console.WriteLine($"[DEBUG] OnPlayerEnter: hráč vstoupil do teleportu {Id}.");
                 currentPlayer = plr;
                 delayTimer = 0f;
+
+                // zvuk vstupu do teleportu
+                //SoundManager.Instance.PlaySound("assets/sfx/teleport_start.wav", Position);
             }
         }
 
@@ -219,21 +222,19 @@ namespace ZPG
             if (currentPlayer == null || FadeOverlay == null || FadeOverlay.IsActive)
                 return;
 
-            if (currentPlayer == null || FadeOverlay == null)
-            {
-                Console.WriteLine("[TeleportTrigger] Teleport aborted – no player or overlay.");
-                return;
-            }
-
             Console.WriteLine("[TeleportTrigger] Starting teleport fade...");
             isTeleporting = true;
+
+            // Zvuk teleportace při spuštění efektu
+            SoundManager.Instance.PlaySound("assets/sfx/teleport_end.wav", TargetPosition);
 
             FadeOverlay.StartFade(() =>
             {
                 Console.WriteLine("[TeleportTrigger] Teleporting player.");
                 currentPlayer.Position = TargetPosition + new Vector3(0, -1f, 0);
                 currentPlayer.Velocity = Vector3.Zero;
-
+                currentPlayer.Velocity = Vector3.Zero;
+                
                 cooldownTimer = CooldownAfterTeleport;
                 SetGlobalCooldown(CooldownAfterTeleport);
 
