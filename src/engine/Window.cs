@@ -33,6 +33,7 @@ namespace ZPG
         private Shader transShader;
         private Shader collectibleShader;
         private FadeOverlay teleportFadeOverlay;
+        
         private string[] _args { get; set; }
         private int collectedCount = 0;
 
@@ -130,6 +131,8 @@ namespace ZPG
             player.TriggerModels = mapReader.GetTeleportTriggers().Cast<Model>().ToList();
 
             CursorState = CursorState.Grabbed;
+            
+            SoundManager.Instance.PlayMusic("assets/music/zpg_theme_ost.wav");
         }
 
         protected override void OnRenderFrame(FrameEventArgs args)
@@ -264,6 +267,9 @@ namespace ZPG
 
             player.UpdateCamera();
             teleportFadeOverlay.Update(dt);
+            
+            Vector2 hVel = new(player.Velocity.X, player.Velocity.Z);
+            SoundManager.Instance.UpdateWalking(player.Position, hVel.Length, dt);
         }
 
         protected override void OnMouseMove(MouseMoveEventArgs e)

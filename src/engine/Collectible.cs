@@ -66,6 +66,8 @@ namespace ZPG
 
             IsCollected = true;
             Console.WriteLine($"[Collectible] Player collected the item.");
+            
+            SoundManager.Instance.PlaySound("assets/sfx/paper_pickup.wav", GetPosition());
 
             // Spusť akci po sebrání
             OnCollected?.Invoke();

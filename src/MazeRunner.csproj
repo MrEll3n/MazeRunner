@@ -24,5 +24,8 @@
     <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
   </Content>
 </ItemGroup>
+  <ItemGroup>
+    <Folder Include="assets\music\" />
+  </ItemGroup>
 
 </Project>
