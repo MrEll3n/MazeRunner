@@ -1,26 +1,28 @@
 #!/bin/bash
 
-# Exit immediately if a command fails
 set -e
 
-# App name (replace with your actual project name if needed)
-APP_NAME="YourApp"
+APP_NAME="MazeRunner"
+PROJECT_PATH="./src/MazeRunner.csproj"
 
-# Target runtime identifiers
 RUNTIMES=("osx-x64" "osx-arm64" "win-x64" "linux-x64")
 
 for RID in "${RUNTIMES[@]}"; do
-  echo "Publishing for $RID..."
-
+  echo "🚀 Publishing for $RID..."
   OUTPUT_DIR="./publish/$RID"
 
-  dotnet publish -c Release -r "$RID" \
+  dotnet publish "$PROJECT_PATH" \
+    -c Release -r "$RID" \
     --self-contained true \
     -o "$OUTPUT_DIR" \
     /p:PublishSingleFile=true \
-    /p:PublishTrimmed=true \
+    /p:PublishTrimmed=false \
     /p:DebugType=None \
     /p:DebugSymbols=false
+
+  if [[ "$RID" != win-* ]]; then
+    chmod +x "$OUTPUT_DIR/$APP_NAME"
+  fi
 
   echo "✔️  Done: $RID → $OUTPUT_DIR"
 done
