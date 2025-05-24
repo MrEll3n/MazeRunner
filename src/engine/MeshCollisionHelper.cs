@@ -3,20 +3,20 @@ using OpenTK.Mathematics;
 namespace ZPG
 {
     /// <summary>
-    /// Pomocná třída pro detekci kolizí mezi sférickými objekty a trojúhelníkovými meshi.
+    /// Helper class for detecting collisions between spherical objects and triangle meshes.
     /// </summary>
     public static class MeshCollisionHelper
     {
         /// <summary>
-        /// Detekuje kolizi mezi sférickým objektem a trojúhelníkem v prostoru.
+        /// Detects a collision between a sphere and a triangle in space.
         /// </summary>
-        /// <param name="center">Střed koule.</param>
-        /// <param name="radius">Poloměr koule.</param>
-        /// <param name="a">Vrchol A trojúhelníku.</param>
-        /// <param name="b">Vrchol B trojúhelníku.</param>
-        /// <param name="c">Vrchol C trojúhelníku.</param>
-        /// <param name="pushOut">Vystupní vektor, kterým lze kouli odsunout mimo kolizi.</param>
-        /// <returns>True, pokud došlo ke kolizi.</returns>
+        /// <param name="center">Center of the sphere.</param>
+        /// <param name="radius">Radius of the sphere.</param>
+        /// <param name="a">Vertex A of the triangle.</param>
+        /// <param name="b">Vertex B of the triangle.</param>
+        /// <param name="c">Vertex C of the triangle.</param>
+        /// <param name="pushOut">Output vector to push the sphere out of collision.</param>
+        /// <returns>True if a collision occurred.</returns>
         public static bool SphereIntersectsTriangle(Vector3 center, float radius, Vector3 a, Vector3 b, Vector3 c, out Vector3 pushOut)
         {
             pushOut = Vector3.Zero;
@@ -40,13 +40,13 @@ namespace ZPG
         }
 
         /// <summary>
-        /// Najde nejbližší bod na trojúhelníku vůči bodu v prostoru.
+        /// Finds the closest point on a triangle to a given point in space.
         /// </summary>
-        /// <param name="p">Bod, ke kterému hledáme nejbližší bod na trojúhelníku.</param>
-        /// <param name="a">Vrchol A trojúhelníku.</param>
-        /// <param name="b">Vrchol B trojúhelníku.</param>
-        /// <param name="c">Vrchol C trojúhelníku.</param>
-        /// <returns>Nejbližší bod na trojúhelníku k bodu <paramref name="p"/>.</returns>
+        /// <param name="p">The point to which the closest point on the triangle is sought.</param>
+        /// <param name="a">Vertex A of the triangle.</param>
+        /// <param name="b">Vertex B of the triangle.</param>
+        /// <param name="c">Vertex C of the triangle.</param>
+        /// <returns>The closest point on the triangle to the point <paramref name="p"/>.</returns>
         private static Vector3 ClosestPointOnTriangle(Vector3 p, Vector3 a, Vector3 b, Vector3 c)
         {
             // Vektory stran

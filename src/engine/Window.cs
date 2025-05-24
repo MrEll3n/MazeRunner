@@ -9,6 +9,9 @@ using System.Linq;
 
 namespace ZPG
 {
+    /// <summary>
+    /// Main game window class for MazeRunner. Handles rendering, input, physics, and scene logic.
+    /// </summary>
     public class Window : GameWindow
     {
         public MapReader mapReader;
@@ -37,11 +40,18 @@ namespace ZPG
         private string[] _args { get; set; }
         private int collectedCount = 0;
 
+        /// <summary>
+        /// Creates a new instance of the game window with optional startup arguments.
+        /// </summary>
+        /// <param name="args">Startup arguments, e.g., --fullscreen or --mac.</param>
         public Window(string[] args) : base(GameWindowSettings.Default, NativeWindowSettings.Default)
         {
             _args = args;
         }
 
+        /// <summary>
+        /// Initializes OpenGL state, loads shaders, textures, and sets up the map and player.
+        /// </summary>
         protected override void OnLoad() {
             base.OnLoad();
             GL.LoadBindings(new GLFWBindingsContext());
@@ -135,6 +145,10 @@ namespace ZPG
             SoundManager.Instance.PlayMusic("assets/music/zpg_theme_ost.wav");
         }
 
+        /// <summary>
+        /// Handles rendering of the scene every frame including HUD and fade overlays.
+        /// </summary>
+        /// <param name="args">Frame timing arguments.</param>
         protected override void OnRenderFrame(FrameEventArgs args)
         {
             base.OnRenderFrame(args);
@@ -189,6 +203,10 @@ namespace ZPG
             }
         }
 
+        /// <summary>
+        /// Updates physics, player movement, triggers, collectibles, and sound state.
+        /// </summary>
+        /// <param name="args">Frame timing arguments.</param>
         protected override void OnUpdateFrame(FrameEventArgs args)
         {
             base.OnUpdateFrame(args);
@@ -273,6 +291,10 @@ namespace ZPG
             SoundManager.Instance.UpdateWalking(player.Position, hVel.Length, dt);
         }
 
+        /// <summary>
+        /// Handles mouse movement input for rotating the camera.
+        /// </summary>
+        /// <param name="e">Mouse movement event data.</param>
         protected override void OnMouseMove(MouseMoveEventArgs e)
         {
             base.OnMouseMove(e);
@@ -280,8 +302,16 @@ namespace ZPG
             player.Camera.RotateX(-e.Delta.Y * 0.002f);
         }
 
+        /// <summary>
+        /// Triggers a full-screen fade animation used during teleportation.
+        /// </summary>
+        /// <param name="onFadeComplete">Callback to run after fade-in completes.</param>
         public void StartTeleportFade(Action onFadeComplete) => teleportFadeOverlay.StartFade(onFadeComplete);
 
+        /// <summary>
+        /// Handles window resizing and updates internal dimensions.
+        /// </summary>
+        /// <param name="e">Resize event data.</param>
         protected override void OnResize(ResizeEventArgs e)
         {
             base.OnResize(e);
@@ -289,6 +319,10 @@ namespace ZPG
             Height = e.Height;
         }
 
+        /// <summary>
+        /// Handles key press events for toggling fullscreen, mouse grabbing, jumping, and quitting.
+        /// </summary>
+        /// <param name="e">Key event data.</param>
         protected override void OnKeyDown(KeyboardKeyEventArgs e)
         {
             base.OnKeyDown(e);
@@ -310,18 +344,28 @@ namespace ZPG
             if (e.Key == Keys.Space) isJumping = true;
         }
 
+        /// <summary>
+        /// Handles key release events such as stopping jump activation.
+        /// </summary>
+        /// <param name="e">Key event data.</param>
         protected override void OnKeyUp(KeyboardKeyEventArgs e)
         {
             base.OnKeyUp(e);
             if (e.Key == Keys.Space) isJumping = false;
         }
 
+        /// <summary>
+        /// Switches the game window to fullscreen mode and adjusts viewport scale for macOS.
+        /// </summary>
         private void SetFullscreenMode()
         {
             WindowState = WindowState.Fullscreen;
             if (_args.Contains("--mac")) vpScale = 1.0f;
         }
 
+        /// <summary>
+        /// Switches the game window to windowed mode and adjusts viewport scale for macOS.
+        /// </summary>
         private void SetWindowedMode()
         {
             WindowState = WindowState.Normal;

@@ -48,7 +48,7 @@ Souhlasím s vystavením této semestrální práce na stránkách katedry infor
 
 \vspace{0.5cm}
 
-\section*{Dokumentace k semestrální práci: 3D bludiště v OpenTK}
+\section*{Dokumentace k druhému odevzdání semestrální práce: 3D bludiště v OpenTK}
 
 \section{Popis projektu}
 Aplikace implementuje základní 3D bludiště v prostředí OpenGL pomocí knihovny OpenTK, včetně kompletní fyziky pohybu hráče, kolizí, osvětlení a práce s texturami. Cílem bylo vytvořit interaktivní first-person prostředí, které je stabilní, fyzikálně konzistentní a odpovídá specifikaci zadání.
@@ -162,6 +162,18 @@ Na obrazovce je zobrazeno počítadlo snímků za vteřinu, které počítá, ko
 \subsection*{First-person pohled a ovládání}
 Kamera sleduje hráče z pohledu první osoby. Myší lze otáčet pohled (vertikálně i horizontálně), přičemž rotace je omezena v rozsahu -90° až +90° ve vertikále. FOV lze dynamicky měnit kolečkem myši mezi 30° a 120°, výchozí hodnota je 90°.
 
+\subsection*{Teleporty s animací a průhledností}
+Teleporty mají animované chování – plynulé otáčení a sinusové pohupování ve vertikálním směru. Při aktivaci se spouští vizuální efekt „fade to white“. Používají průhledné textury a správné míchání alfa kanálu.
+
+\subsection*{Sběratelské předměty}
+Do bludiště byly přidány sběratelské předměty ve formě plovoucích billboardů. Reagují na kolizi s hráčem, po sebrání zmizí a přehrají zvukový efekt. Počet sebraných předmětů se zobrazuje v HUD.
+
+\subsection*{HUD (heads-up display)}
+Na obrazovce je zobrazován aktuální počet sebraných předmětů a FPS. Text je vykreslován pomocí bitmapového fontu s podporou zarovnání a měřítka.
+
+\subsection*{Hudba a zvuky}
+Implementace prostorového zvuku pomocí OpenAL – zahrnuje zvuky kroků, sběru a teleportace. Při spuštění se přehrává smyčkovaná hudba na pozadí.
+
 \section{Implementované prvky dle zadání}
 
 \subsection*{Povinná část}
@@ -183,6 +195,9 @@ Kamera sleduje hráče z pohledu první osoby. Myší lze otáčet pohled (verti
     \item Svítilna (projekční světlo)
     \item FPS měření
     \item Pokročilý kolizní systém
+    \item Sběr předmětů (papírky zápočtů)
+    \item Teleporty s anymací a průhlednou texturou
+    \item HUD s informací o počtu sebraných předmětů a FPS
 \end{itemize}
 
 \section{Poznámky k ovládání}
@@ -191,10 +206,8 @@ Kamera sleduje hráče z pohledu první osoby. Myší lze otáčet pohled (verti
     \item \texttt{Shift} – běh
     \item \texttt{Mezerník} – skok
     \item \texttt{Myš} – otáčení pohledu
-    \item \texttt{Kolečko} – změna FOV (30°–120°)
 \end{itemize}
 
 \section{Závěr}
-Implementace naplňuje požadavky zadání a zároveň ukazuje silnou stránku ve fyzikálně korektním chování hráče, precizních kolizích a světelném modelu. Kód je rozdělen do samostatných modulů, což usnadňuje rozšiřování o další funkce (např. minimapa, AI, grafické efekty).
-
+Implementace naplňuje požadavky zadání a dále je rozšířena o nadstandardní funkce. Projekt nově obsahuje animované teleporty s průhlednými texturami, sběratelské předměty (collectibly) a základní HUD s počítadlem. Herní zážitek doplňuje hudba a prostorové zvuky pomocí OpenAL. Kódová architektura je modulární, což usnadňuje přidávání dalších prvků (např. minimapy, AI nebo grafických efektů). Důraz byl kladen na fyzikálně korektní chování hráče, precizní kolize s prostředím a správné nasvícení scény.
 \end{document}

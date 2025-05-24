@@ -8,9 +8,16 @@ using OpenTK.Mathematics;
 
 namespace ZPG
 {
+    /// <summary>
+    /// Singleton-based manager for handling audio playback using OpenAL, including music, sound effects,
+    /// positional audio, walking sounds, and 3D listener configuration.
+    /// </summary>
     public class SoundManager : IDisposable
     {
         private static SoundManager _instance;
+        /// <summary>
+        /// Gets the singleton instance of the SoundManager.
+        /// </summary>
         public static SoundManager Instance => _instance ??= new SoundManager();
 
         private ALDevice device;
@@ -45,6 +52,12 @@ namespace ZPG
             musicSource = AL.GenSource();
         }
 
+        /// <summary>
+        /// Plays background music from the specified path.
+        /// </summary>
+        /// <param name="path">Path to the WAV file.</param>
+        /// <param name="volume">Volume of playback (0–1).</param>
+        /// <param name="loop">Whether the music should loop.</param>
         public void PlayMusic(string path, float volume = 0.35f, bool loop = true)
         {
             int buffer = LoadBuffer(path);
@@ -57,11 +70,22 @@ namespace ZPG
             AL.SourcePlay(musicSource);
         }
 
+        /// <summary>
+        /// Plays a 2D sound effect from the specified path.
+        /// </summary>
+        /// <param name="path">Path to the sound file.</param>
+        /// <param name="volume">Playback volume.</param>
         public void PlaySound(string path, float volume = 1.0f)
         {
             PlaySound(path, Vector3.Zero, volume);
         }
 
+        /// <summary>
+        /// Plays a 3D positional sound effect.
+        /// </summary>
+        /// <param name="path">Path to the sound file.</param>
+        /// <param name="position">World-space position of the sound.</param>
+        /// <param name="volume">Playback volume.</param>
         public void PlaySound(string path, Vector3 position, float volume = 1.0f)
         {
             if (soundSources.Count >= MaxSimultaneousSounds)
@@ -83,6 +107,10 @@ namespace ZPG
             soundSources.Add(source);
         }
 
+        /// <summary>
+        /// Updates all active sounds and removes sources that have finished playing.
+        /// Should be called once per frame.
+        /// </summary>
         public void Update()
         {
             soundSources.RemoveAll(src =>
@@ -107,6 +135,12 @@ namespace ZPG
             });
         }
 
+        /// <summary>
+        /// Handles automatic walking sound effects based on player movement and speed.
+        /// </summary>
+        /// <param name="playerPosition">Current position of the player.</param>
+        /// <param name="playerSpeed">Current horizontal speed of the player.</param>
+        /// <param name="deltaTime">Elapsed time since last update.</param>
         public void UpdateWalking(Vector3 playerPosition, float playerSpeed, float deltaTime)
         {
             float startThreshold = 0.2f;
@@ -150,6 +184,12 @@ namespace ZPG
             }
         }
 
+        /// <summary>
+        /// Plays a walking step sound with an enforced maximum duration.
+        /// </summary>
+        /// <param name="path">Path to the step sound file.</param>
+        /// <param name="volume">Playback volume.</param>
+        /// <param name="maxDurationSeconds">Maximum duration before forcefully stopping the sound.</param>
         public void PlayStepSound(string path, float volume, float maxDurationSeconds)
         {
             if (soundSources.Count >= MaxSimultaneousSounds)
@@ -179,6 +219,12 @@ namespace ZPG
             });
         }
 
+        /// <summary>
+        /// Sets the listener position and orientation for 3D sound spatialization.
+        /// </summary>
+        /// <param name="position">Listener world position.</param>
+        /// <param name="forward">Listener forward direction vector.</param>
+        /// <param name="up">Listener up direction vector.</param>
         public void SetListener(Vector3 position, Vector3 forward, Vector3 up)
         {
             AL.Listener(ALListener3f.Position, position.X, position.Y, position.Z);
@@ -236,6 +282,9 @@ namespace ZPG
             _ => throw new NotSupportedException("Unsupported WAV format."),
         };
 
+        /// <summary>
+        /// Releases OpenAL resources and deletes all audio sources and buffers.
+        /// </summary>
         public void Dispose()
         {
             AL.DeleteSource(musicSource);

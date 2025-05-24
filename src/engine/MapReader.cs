@@ -5,6 +5,10 @@ using OpenTK.Mathematics;
 
 namespace ZPG
 {
+    /// <summary>
+    /// Responsible for reading a map definition file and generating game entities
+    /// such as walls, collectibles, teleporters, and the player's starting position.
+    /// </summary>
     public class MapReader
     {
         private readonly List<Wall> walls = new();
@@ -15,14 +19,35 @@ namespace ZPG
         private readonly Shader shader;
         private readonly int wallLength = 2;
 
+        /// <summary>
+        /// Gets the player's starting position in the map.
+        /// </summary>
         public Vector3 PlayerStartPosition { get; private set; }
+        /// <summary>
+        /// Gets the list of teleport connections generated from the map.
+        /// </summary>
         public List<Teleport> Teleports { get; private set; } = new();
 
+        /// <summary>
+        /// Returns a list of wall objects generated from the map file.
+        /// </summary>
         public List<Wall> GetWalls() => walls;
+        /// <summary>
+        /// Returns a list of all renderable models created from the map.
+        /// </summary>
         public List<Model> GetRenderables() => renderables;
+        /// <summary>
+        /// Returns the player's starting position.
+        /// </summary>
         public Vector3 GetPlayerStartPosition() => PlayerStartPosition;
+        /// <summary>
+        /// Gets the map of trigger zones indexed by tile position.
+        /// </summary>
         public Dictionary<Vector2i, ITriggerZone> GetTriggerMap() => triggerMap;
 
+        /// <summary>
+        /// Returns a list of all teleport triggers present in the renderables list.
+        /// </summary>
         public List<TeleportTrigger> GetTeleportTriggers()
         {
             List<TeleportTrigger> triggers = new();
@@ -34,12 +59,19 @@ namespace ZPG
             return triggers;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MapReader"/> class using the specified shader.
+        /// </summary>
+        /// <param name="shader">The shader to apply to generated models.</param>
         public MapReader(Shader shader)
         {
             this.shader = shader;
             Console.WriteLine("[MapReader] Inicializován");
         }
 
+        /// <summary>
+        /// Returns a list of all collectibles found in the renderables list.
+        /// </summary>
         public List<Collectible> GetCollectibles()
         {
             List<Collectible> collectibles = new();
@@ -51,6 +83,10 @@ namespace ZPG
             return collectibles;
         }
 
+        /// <summary>
+        /// Reads and parses the map definition file at the given path and generates the corresponding game objects.
+        /// </summary>
+        /// <param name="filePath">The path to the map file.</param>
         public void ReadFile(string filePath)
         {
             if (!File.Exists(filePath))

@@ -1,31 +1,31 @@
 ﻿namespace ZPG
 {
     /// <summary>
-    /// Reprezentuje barvu v RGB formátu s komponentami v rozsahu 0–1.
+    /// Represents a color in RGB format with components in the range 0–1.
     /// </summary>
     public class ColorRGB
     {
         /// <summary>
-        /// Červená složka barvy (0.0 až 1.0).
+        /// Red color component (0.0 to 1.0).
         /// </summary>
         public double R { get; set; }
 
         /// <summary>
-        /// Zelená složka barvy (0.0 až 1.0).
+        /// Green color component (0.0 to 1.0).
         /// </summary>
         public double G { get; set; }
 
         /// <summary>
-        /// Modrá složka barvy (0.0 až 1.0).
+        /// Blue color component (0.0 to 1.0).
         /// </summary>
         public double B { get; set; }
 
         /// <summary>
-        /// Inicializuje barvu podle zadaných složek R, G a B.
+        /// Initializes the color using the specified R, G, and B components.
         /// </summary>
-        /// <param name="r">Červená složka (0–1).</param>
-        /// <param name="g">Zelená složka (0–1).</param>
-        /// <param name="b">Modrá složka (0–1).</param>
+        /// <param name="r">Red component (0–1).</param>
+        /// <param name="g">Green component (0–1).</param>
+        /// <param name="b">Blue component (0–1).</param>
         public ColorRGB(double r, double g, double b)
         {
             R = r;
@@ -34,7 +34,7 @@
         }
 
         /// <summary>
-        /// Vrací hexadecimální reprezentaci barvy ve formátu #RRGGBB.
+        /// Returns the hexadecimal representation of the color in the format #RRGGBB.
         /// </summary>
         public override string ToString()
         {

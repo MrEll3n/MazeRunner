@@ -4,13 +4,21 @@ using System;
 namespace ZPG
 {
     /// <summary>
-    /// Objekt, který lze sebrat – chová se jako billboard a reaguje na kontakt s hráčem.
+    /// Represents a collectible item in the world that behaves like a billboard and triggers
+    /// a response when the player comes into contact with it.
     /// </summary>
     public class Collectible : Billboard, ITriggerZone
     {
         private bool isPlayerInside = false;
+
+        /// <summary>
+        /// Indicates whether the collectible has already been collected.
+        /// </summary>
         public bool IsCollected = false;
 
+        /// <summary>
+        /// Event triggered when the item is collected by the player.
+        /// </summary>
         public Action OnCollected;
 
         private float triggerRadius;
@@ -18,6 +26,11 @@ namespace ZPG
         private float animationTime = 0f;
         private Vector3 basePosition;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Collectible"/> class.
+        /// </summary>
+        /// <param name="position">The position of the collectible in the world.</param>
+        /// <param name="size">The size of the collectible billboard.</param>
         public Collectible(Vector3 position, Vector2 size)
             : base(position, size, alignX: false, alignY: true, alignZ: false)
         {
@@ -25,6 +38,10 @@ namespace ZPG
             basePosition = position;
         }
 
+        /// <summary>
+        /// Updates the animation state of the collectible (floating effect).
+        /// </summary>
+        /// <param name="dt">Delta time since the last update.</param>
         public void Update(float dt)
         {
             if (IsCollected)
@@ -37,6 +54,10 @@ namespace ZPG
             SetPosition(basePosition + new Vector3(0, offset, 0));
         }
 
+        /// <summary>
+        /// Checks whether the player is currently inside the trigger area of the collectible.
+        /// </summary>
+        /// <param name="player">The player to check against.</param>
         public void CheckTrigger(Player player)
         {
             if (IsCollected)
@@ -52,6 +73,11 @@ namespace ZPG
             isPlayerInside = isInsideNow;
         }
 
+        /// <summary>
+        /// Determines if the player is within the collectible's collision bounds.
+        /// </summary>
+        /// <param name="player">The player to test against.</param>
+        /// <returns>True if the player is inside the trigger area; otherwise false.</returns>
         public bool IsPlayerInside(Player player)
         {
             float collectibleRadius = 0.6f;
@@ -72,6 +98,10 @@ namespace ZPG
             return yOverlap && distXZ <= collectibleRadius;
         }
 
+        /// <summary>
+        /// Called when the player enters the trigger zone and collects the item.
+        /// </summary>
+        /// <param name="player">The player who collected the item.</param>
         public virtual void OnPlayerEnter(Player player)
         {
             if (IsCollected)
@@ -84,8 +114,16 @@ namespace ZPG
             OnCollected?.Invoke();
         }
 
+        /// <summary>
+        /// Called when the player exits the trigger zone (default: no action).
+        /// </summary>
+        /// <param name="player">The player exiting the area.</param>
         public virtual void OnPlayerExit(Player player) { }
 
+        /// <summary>
+        /// Gets the original base position of the collectible.
+        /// </summary>
+        /// <returns>The base position vector.</returns>
         public Vector3 GetPosition()
         {
             return basePosition;

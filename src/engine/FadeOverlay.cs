@@ -4,11 +4,25 @@ using System;
 
 namespace ZPG
 {
+    /// <summary>
+    /// Manages a full-screen fade-in and fade-out visual overlay with alpha blending.
+    /// Used to transition scenes or teleport the player with a smooth visual effect.
+    /// </summary>
     public class FadeOverlay
     {
+        /// <summary>
+        /// The shader used to render the full-screen fade effect.
+        /// </summary>
         public Shader Shader { get; set; }
 
+        /// <summary>
+        /// Current transparency level (0 = transparent, 1 = opaque).
+        /// </summary>
         public float Alpha { get; private set; } = 0f;
+
+        /// <summary>
+        /// Whether a fade is currently active (in progress).
+        /// </summary>
         public bool IsActive { get; private set; } = false;
 
         private bool fadingIn = false;
@@ -16,6 +30,10 @@ namespace ZPG
         private const float fadeSpeed = 1.5f;
         private Action onFadeInComplete;
 
+        /// <summary>
+        /// Starts the fade-in followed by fade-out sequence. Triggers the provided callback when fade-in completes.
+        /// </summary>
+        /// <param name="onFadeInDone">Callback invoked after fade-in completes and before fade-out begins.</param>
         public void StartFade(Action onFadeInDone)
         {
             if (IsActive) return;
@@ -27,6 +45,10 @@ namespace ZPG
             onFadeInComplete = onFadeInDone;
         }
 
+        /// <summary>
+        /// Updates the fade progress based on delta time. Handles both fade-in and fade-out transitions.
+        /// </summary>
+        /// <param name="dt">Delta time in seconds since last frame.</param>
         public void Update(float dt)
         {
             if (!IsActive) return;
@@ -54,6 +76,11 @@ namespace ZPG
             }
         }
 
+        /// <summary>
+        /// Renders the full-screen quad with the current alpha transparency, using the assigned shader.
+        /// </summary>
+        /// <param name="width">Viewport width.</param>
+        /// <param name="height">Viewport height.</param>
         public void DrawFullScreenQuad(int width, int height)
         {
             if (!IsActive || Alpha <= 0f || Shader == null)

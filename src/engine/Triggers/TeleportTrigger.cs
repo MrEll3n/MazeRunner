@@ -5,61 +5,67 @@ using System;
 namespace ZPG
 {
     /// <summary>
-    /// Osmistěnný (diamantový) teleport s animací pohupování, zpožděním a cooldownem.
+    /// Represents an animated diamond-shaped teleport trigger.
+    /// When the player enters the trigger area, a teleportation
+    /// sequence with delay and cooldown is executed.
     /// </summary>
     public class TeleportTrigger : Model, ITriggerZone
     {
-        /* ---------- veřejné vlastnosti ---------- */
-
-        /// <summary>ID teleportu, tj. číslice z mapy.</summary>
+        /// <summary>Unique identifier of the teleport trigger (e.g. tile symbol in map).</summary>
         public char Id { get; set; }
 
-        /// <summary>Místo, kam se hráč po uplynutí delaye přenese.</summary>
+        /// <summary>Target position to which the player will be teleported.</summary>
         public Vector3 TargetPosition { get; set; }
 
-        /// <summary>Čas, po jak dlouhé době přenos nastane (s).</summary>
+        /// <summary>Time (in seconds) to wait before teleportation occurs after activation.</summary>
         public float DelayBeforeTeleport { get; set; } = 1.0f;
 
-        /// <summary>Doba, po kterou se po teleportu nedá portál znovu spustit (s).</summary>
+        /// <summary>Cooldown period (in seconds) after teleportation.</summary>
         public float CooldownAfterTeleport { get; set; } = 6.0f;
 
+        /// <summary>Alpha transparency for rendering the teleport model.</summary>
         public float Transparency { get; set; } = 0.65f;
 
-        /* ---------- interní stav ---------- */
+        private float animationTime = 0f;
+        private float basePosY = 0f;
+        private float rotationAngle = 0f;
 
-        private float animationTime = 0f;   // pro sinusové pohupování
-        private float basePosY = 0f;   // „nulová“ výška portálu
-        private float rotationAngle = 0f;   // úhel rotace portálu (pro animaci)
-
-        private Player currentPlayer = null; // hráč, který právě stojí v portálu
-        private float delayTimer = 0f;   // odpočítávání před teleportem
-        private float cooldownTimer = 0f;   // lokální cooldown
+        private Player currentPlayer = null;
+        private float delayTimer = 0f;
+        private float cooldownTimer = 0f;
         private bool isTeleporting = false;
 
-        // --- sdílený globální cooldown (aby se neřetězily portály) ---
         private static float globalCooldown = 0f;
         private static readonly object cooldownLock = new();
 
-        /* ---------- rozměry + kolizní tolerance ---------- */
-
+        /// <summary>Width of the teleport model.</summary>
         public float Width { get; private set; }
+
+        /// <summary>Height of the teleport model.</summary>
         public float Height { get; private set; }
+
+        /// <summary>Depth of the teleport model.</summary>
         public float Depth { get; private set; }
 
-        private float horizRadius;   // poloměr pro X-Z kolizi
-        private float vertTolerance; // povolená odchylka ve výšce
+        private float horizRadius;
+        private float vertTolerance;
 
+        /// <summary>Reference to the screen fade overlay used during teleportation.</summary>
         public FadeOverlay FadeOverlay { get; set; }
 
+        /// <summary>
+        /// Recomputes the bounding collision radius based on model dimensions.
+        /// </summary>
         private void RecomputeCollisionBounds()
         {
-            horizRadius = MathF.Max(Width, Depth) * 0.5f + 0.1f; // malá rezerva
+            horizRadius = MathF.Max(Width, Depth) * 0.5f + 0.1f;
             vertTolerance = Height * 0.5f + 0.1f;
         }
 
-        /* ---------- konstrukce ---------- */
-
-        /// <param name="size">„Hrana“ diamantu (prakticky průměr portálu).</param>
+        /// <summary>
+        /// Constructs a new teleport trigger with the specified size.
+        /// </summary>
+        /// <param name="size">Visual size (diameter) of the diamond-shaped model.</param>
         public TeleportTrigger(float size = 1.6f)
         {
             Width = Height = Depth = size;
@@ -67,7 +73,6 @@ namespace ZPG
             ComputeNormals(Vertices, Triangles);
             Construct();
 
-            // textura portálu
             try
             {
                 TextureID = TextureLoader.LoadTexture("textures/teleport.png");
@@ -78,39 +83,39 @@ namespace ZPG
             }
         }
 
+        /// <summary>
+        /// Computes and returns the model transformation matrix.
+        /// </summary>
         public override Matrix4 GetModelMatrix()
         {
             return Matrix4.CreateRotationY(rotationAngle)
                    * Matrix4.CreateTranslation(Position);
         }
 
-        /* ----------------- MESH generátor (osmistěn) ----------------- */
-
+        /// <summary>
+        /// Generates a diamond-shaped mesh for the teleport model.
+        /// </summary>
         private void BuildDiamondMesh(float size)
         {
             Vertices.Clear();
             Triangles.Clear();
 
-            // indexy: 0 = horní špička, 1 = dolní špička,
-            // 2-5 = střed (N, E, S, W)
             float h = 1.0f;
-            float stretch = 1.3f; // faktor protažení ve vertikálním směru
+            float stretch = 1.3f;
 
-            Vertices.Add(new Vertex(new Vector3(0, h * stretch, 0), new Vector2(0.5f, 1f))); // 0 – horní špička
-            Vertices.Add(new Vertex(new Vector3(0, -h * stretch, 0), new Vector2(0.5f, 0f))); // 1 – spodní špička
+            Vertices.Add(new Vertex(new Vector3(0, h * stretch, 0), new Vector2(0.5f, 1f))); // Top
+            Vertices.Add(new Vertex(new Vector3(0, -h * stretch, 0), new Vector2(0.5f, 0f))); // Bottom
 
-            Vertices.Add(new Vertex(new Vector3(0, 0, -h), new Vector2(0.5f, .5f))); // 2 N
-            Vertices.Add(new Vertex(new Vector3(h, 0, 0), new Vector2(1f, .5f))); // 3 E
-            Vertices.Add(new Vertex(new Vector3(0, 0, h), new Vector2(0.5f, .5f))); // 4 S
-            Vertices.Add(new Vertex(new Vector3(-h, 0, 0), new Vector2(0f, .5f))); // 5 W
+            Vertices.Add(new Vertex(new Vector3(0, 0, -h), new Vector2(0.5f, .5f))); // North
+            Vertices.Add(new Vertex(new Vector3(h, 0, 0), new Vector2(1f, .5f)));    // East
+            Vertices.Add(new Vertex(new Vector3(0, 0, h), new Vector2(0.5f, .5f)));  // South
+            Vertices.Add(new Vertex(new Vector3(-h, 0, 0), new Vector2(0f, .5f)));   // West
 
-            // horní poloviny – CCW při pohledu zvenčí ⇒ normály ↑
             AddFace(0, 3, 2);
             AddFace(0, 4, 3);
             AddFace(0, 5, 4);
             AddFace(0, 2, 5);
 
-            // spodní poloviny – CCW při pohledu zvenčí ⇒ normály ↓
             AddFace(2, 3, 1);
             AddFace(3, 4, 1);
             AddFace(4, 5, 1);
@@ -121,35 +126,31 @@ namespace ZPG
             RecomputeCollisionBounds();
         }
 
-        /* ----------------- veřejné utilitky ----------------- */
-
-        /// <summary>Uloží počáteční Y a nastaví aktuální pozici modelu.</summary>
+        /// <summary>
+        /// Sets the base position of the model and stores its Y value.
+        /// </summary>
         public void SetBasePosition(Vector3 pos)
         {
             Position = pos;
             basePosY = pos.Y;
         }
 
-        /* ----------------- detekce kolize hráče ----------------- */
-
+        /// <summary>
+        /// Checks if the player is within the teleport activation zone.
+        /// </summary>
         public bool IsColliding(Player plr)
         {
-            //Console.WriteLine($"[DEBUG] playerY: {plr.Position.Y:F2} .. {plr.Position.Y + plr.CameraHeight:F2}, basePosY: {basePosY:F2}, posY: {Position.Y:F2}");
             float teleportRadius = 1.2f;
             float teleportHeight = 2.5f;
 
-            // Hráčovy hranice (nohy až hlava)
             float playerYMin = plr.Position.Y;
             float playerYMax = plr.Position.Y + plr.CameraHeight;
 
-            // Válcový trigger má střed u basePosY
             float yBottom = basePosY - teleportHeight / 2f;
             float yTop = basePosY + teleportHeight / 2f;
 
-            // AABB-Y překrytí?
             bool yOverlap = playerYMax >= yBottom && playerYMin <= yTop;
 
-            // Vzdálenost v XZ rovině
             Vector2 playerXZ = new(plr.Position.X, plr.Position.Z);
             Vector2 triggerXZ = new(Position.X, Position.Z);
             float distXZ = (playerXZ - triggerXZ).Length;
@@ -157,26 +158,28 @@ namespace ZPG
             return yOverlap && distXZ <= teleportRadius;
         }
 
-        /* ----------------- reakce na vstup/odchod ----------------- */
-
+        /// <summary>
+        /// Handles the logic when the player enters the teleport trigger.
+        /// </summary>
         public void OnPlayerEnter(Player plr)
         {
             if (IsGlobalCooldown() || cooldownTimer > 0f) return;
 
             if (currentPlayer == null)
             {
-                Console.WriteLine($"[DEBUG] OnPlayerEnter: hráč vstoupil do teleportu {Id}.");
+                Console.WriteLine($"[DEBUG] OnPlayerEnter: player entered teleport {Id}.");
                 currentPlayer = plr;
                 delayTimer = 0f;
 
-                // zvuk vstupu do teleportu
-                //SoundManager.Instance.PlaySound("assets/sfx/teleport_start.wav", Position);
+                // SoundManager.Instance.PlaySound("assets/sfx/teleport_start.wav", Position);
             }
         }
 
+        /// <summary>
+        /// Handles the logic when the player leaves the teleport trigger.
+        /// </summary>
         public void OnPlayerExit(Player plr)
         {
-            // reset jen pokud nic neběží
             if (plr == currentPlayer && !isTeleporting && cooldownTimer <= 0f)
             {
                 currentPlayer = null;
@@ -184,29 +187,27 @@ namespace ZPG
             }
         }
 
-        /* ----------------- hlavní Update ----------------- */
-
+        /// <summary>
+        /// Updates the teleport trigger state (animation, cooldown, delay).
+        /// </summary>
         public void Update(float dt)
         {
-            // animace (lehké pohupování)
             animationTime += dt;
             Position = new Vector3(Position.X,
                                    basePosY + 0.1f * MathF.Sin(animationTime * 2f),
                                    Position.Z);
 
-            rotationAngle += dt * .5f; // 1.0f = rychlost otáčení (radiány za sekundu)
+            rotationAngle += dt * 0.5f;
             if (rotationAngle > MathF.Tau) rotationAngle -= MathF.Tau;
 
             TickGlobalCooldown(dt);
 
-            // lokální cooldown
             if (cooldownTimer > 0f)
             {
                 cooldownTimer = MathF.Max(0f, cooldownTimer - dt);
                 return;
             }
 
-            // čekání na uplynutí delaye
             if (currentPlayer != null)
             {
                 delayTimer += dt;
@@ -215,8 +216,9 @@ namespace ZPG
             }
         }
 
-        /* ----------------- TELEPORTACE ----------------- */
-
+        /// <summary>
+        /// Executes the teleportation and resets timers.
+        /// </summary>
         private void ExecuteTeleport()
         {
             if (currentPlayer == null || FadeOverlay == null || FadeOverlay.IsActive)
@@ -225,7 +227,6 @@ namespace ZPG
             Console.WriteLine("[TeleportTrigger] Starting teleport fade...");
             isTeleporting = true;
 
-            // Zvuk teleportace při spuštění efektu
             SoundManager.Instance.PlaySound("assets/sfx/teleport_end.wav", TargetPosition);
 
             FadeOverlay.StartFade(() =>
@@ -233,8 +234,7 @@ namespace ZPG
                 Console.WriteLine("[TeleportTrigger] Teleporting player.");
                 currentPlayer.Position = TargetPosition + new Vector3(0, -1f, 0);
                 currentPlayer.Velocity = Vector3.Zero;
-                currentPlayer.Velocity = Vector3.Zero;
-                
+
                 cooldownTimer = CooldownAfterTeleport;
                 SetGlobalCooldown(CooldownAfterTeleport);
 
@@ -244,9 +244,9 @@ namespace ZPG
             });
         }
 
-
-        /* ----------------- globální cooldown ----------------- */
-
+        /// <summary>
+        /// Sets the global cooldown for all teleport triggers.
+        /// </summary>
         private static void SetGlobalCooldown(float t)
         {
             lock (cooldownLock)
@@ -255,6 +255,9 @@ namespace ZPG
             }
         }
 
+        /// <summary>
+        /// Updates the global cooldown timer.
+        /// </summary>
         private static void TickGlobalCooldown(float dt)
         {
             lock (cooldownLock)
@@ -264,12 +267,17 @@ namespace ZPG
             }
         }
 
+        /// <summary>
+        /// Checks if a global cooldown is currently active.
+        /// </summary>
         private static bool IsGlobalCooldown()
         {
             lock (cooldownLock) { return globalCooldown > 0f; }
         }
 
-        /* ----------------- override draw ----------------- */
+        /// <summary>
+        /// Renders the teleport trigger to the screen.
+        /// </summary>
         public override void Draw(Camera camera)
         {
             Matrix4 modelMatrix = GetModelMatrix();

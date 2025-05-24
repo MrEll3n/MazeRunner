@@ -4,45 +4,44 @@ using OpenTK.Mathematics;
 namespace ZPG
 {
     /// <summary>
-    /// Viewport umožňuje namapovat normalizované souřadnice zařízení (-1, 1) do části kontrolky pomocí
-    /// normalizovaných souřadnic okna (0, 1) a zpět.
+    /// Viewport maps normalized device coordinates (-1 to 1) to a portion of the window using normalized window coordinates (0 to 1) and vice versa.
     /// </summary>
     public class Viewport
     {
         /// <summary>
-        /// normalizovaná souřadnice okna (0 = horní okraj)
+        /// Normalized top coordinate of the window (0 = top edge).
         /// </summary>
         public float Top { get; set; }
 
         /// <summary>
-        /// normalizovaná souřadnice okna (0 = levý okraj)
+        /// Normalized left coordinate of the window (0 = left edge).
         /// </summary>
         public float Left { get; set; }
 
         /// <summary>
-        /// šířka (1 = celá šířka kontrolky)
+        /// Width of the viewport (1 = full width of the window).
         /// </summary>
         public float Width { get; set; }
 
         /// <summary>
-        /// výška (1 = celá výška kontrolky)
+        /// Height of the viewport (1 = full height of the window).
         /// </summary>
         public float Height { get; set; }
 
         /// <summary>
-        /// propojená kontrolka (potřeba kvůli rozměrům)
+        /// Associated window used to determine pixel dimensions.
         /// </summary>
         public Window Window { get; set; } = null!;
 
         public Viewport() { }
 
         /// <summary>
-        /// Poměr stran viewportu
+        /// Aspect ratio of the viewport.
         /// </summary>
         public float AspectRatio => (float)Window.Size.X / (float)Window.Size.Y;
 
         /// <summary>
-        /// nastaví tento viewport jako platný
+        /// Applies this viewport to the OpenGL rendering context.
         /// </summary>
         public void Set()
         {
@@ -55,7 +54,7 @@ namespace ZPG
         }
 
         /// <summary>
-        /// vyčistí oblast tohoto viewportu
+        /// Clears the current viewport area with a transparent color.
         /// </summary>
         public void Clear()
         {
@@ -64,11 +63,11 @@ namespace ZPG
         }
 
         /// <summary>
-        /// převede souřadnice okna na normalizované souřadnice zařízení podle umístění a velikosti viewportu
+        /// Converts window pixel coordinates to normalized device coordinates based on viewport position and size.
         /// </summary>
-        /// <param name="x">x souřadnice v pixelech</param>
-        /// <param name="y">y souřadnice v pixelech</param>
-        /// <returns>souřadnice v normalizovaném prostoru zařízení (-1, 1)</returns>
+        /// <param name="x">X coordinate in pixels.</param>
+        /// <param name="y">Y coordinate in pixels.</param>
+        /// <returns>Coordinates in normalized device space (-1 to 1).</returns>
         public Vector3 WindowViewport(int x, int y)
         {
             return new Vector3(

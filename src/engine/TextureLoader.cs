@@ -8,15 +8,15 @@ using System.IO;
 namespace ZPG
 {
     /// <summary>
-    /// Poskytuje metodu pro načítání textur z obrázkových souborů a jejich nahrání do OpenGL.
+    /// Provides a method for loading image textures from files and uploading them to OpenGL.
     /// </summary>
     public static class TextureLoader
     {
         /// <summary>
-        /// Načte 2D texturu ze souboru a nahraje ji do OpenGL. Vrací ID vytvořené textury.
+        /// Loads a 2D texture from an image file and uploads it to OpenGL. Returns the generated texture ID.
         /// </summary>
-        /// <param name="path">Cesta k obrázkovému souboru (např. PNG, JPG).</param>
-        /// <returns>ID textury nebo 0 při chybě.</returns>
+        /// <param name="path">Path to the image file (e.g., PNG, JPG).</param>
+        /// <returns>The texture ID or 0 if loading failed.</returns>
         public static int LoadTexture(string path)
         {
             // Kontrola existence souboru

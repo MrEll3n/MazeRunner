@@ -5,6 +5,10 @@ using System.Collections.Generic;
 
 namespace ZPG
 {
+    /// <summary>
+    /// Renders 2D HUD text using a bitmap font texture arranged in a 16x8 character grid.
+    /// Each character is drawn as a textured quad. Supports alignment and scaling based on screen resolution.
+    /// </summary>
     public class HudRenderer
     {
         private readonly int textureId;
@@ -14,6 +18,10 @@ namespace ZPG
         private const int CHAR_COLS = 16;
         private const int CHAR_ROWS = 8;
 
+        /// <summary>
+        /// Initializes the HUD renderer by loading the font texture and setting up OpenGL buffers.
+        /// </summary>
+        /// <param name="texturePath">Path to the font texture image.</param>
         public HudRenderer(string texturePath)
         {
             textureId = TextureLoader.LoadTexture(texturePath);
@@ -36,6 +44,16 @@ namespace ZPG
             GL.BindVertexArray(0);
         }
 
+        /// <summary>
+        /// Renders a string of text on the screen at the specified normalized coordinates and size.
+        /// </summary>
+        /// <param name="text">The text to draw.</param>
+        /// <param name="normX">Normalized horizontal screen position (0 to 1).</param>
+        /// <param name="normY">Normalized vertical screen position (0 to 1).</param>
+        /// <param name="sizeNorm">Relative size multiplier (based on 1080p height).</param>
+        /// <param name="screenWidth">Current screen width in pixels.</param>
+        /// <param name="screenHeight">Current screen height in pixels.</param>
+        /// <param name="align">Text alignment (Left, Center, Right).</param>
         public void DrawText(
             string text,
             float normX,
